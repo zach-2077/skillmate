@@ -18,7 +18,7 @@ export interface InstalledSkill {
   path: string;
 }
 
-const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---/;
+const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---/;
 
 export function parseFrontmatterDescription(skillMdPath: string): string {
   let raw: string;

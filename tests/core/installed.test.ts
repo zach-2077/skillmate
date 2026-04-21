@@ -33,6 +33,13 @@ describe('parseFrontmatterDescription', () => {
   it('returns empty string when file unreadable', () => {
     expect(parseFrontmatterDescription('/no/such/path/SKILL.md')).toBe('');
   });
+
+  it('handles CRLF line endings', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'skill-crlf-'));
+    const path = join(dir, 'SKILL.md');
+    writeFileSync(path, '---\r\nname: x\r\ndescription: hello crlf\r\n---\r\n# body\r\n');
+    expect(parseFrontmatterDescription(path)).toBe('hello crlf');
+  });
 });
 
 describe('mergeInstalledLists', () => {
