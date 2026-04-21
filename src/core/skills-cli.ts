@@ -39,5 +39,10 @@ export async function runSkillsCli(args: string[], opts: RunOptions = {}): Promi
       if (opts.signal) opts.signal.removeEventListener('abort', onAbort);
       resolve({ exitCode: code ?? 1, stdout, stderr });
     });
+
+    child.on('error', (err: Error) => {
+      if (opts.signal) opts.signal.removeEventListener('abort', onAbort);
+      resolve({ exitCode: 1, stdout: '', stderr: err.message });
+    });
   });
 }

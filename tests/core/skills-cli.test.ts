@@ -41,6 +41,22 @@ describe('runSkillsCli', () => {
     expect(result.stderr).toBe('boom');
   });
 
+  it('resolves with stderr on spawn error', async () => {
+    const child = new EventEmitter() as EventEmitter & {
+      stdout: Readable;
+      stderr: Readable;
+      kill: (signal?: string) => void;
+    };
+    child.stdout = Readable.from(['']);
+    child.stderr = Readable.from(['']);
+    child.kill = vi.fn();
+    setImmediate(() => child.emit('error', new Error('ENOENT: no such file')));
+    spawnMock.mockReturnValue(child);
+    const result = await runSkillsCli(['--version']);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('ENOENT');
+  });
+
   it('aborts via signal', async () => {
     const controller = new AbortController();
     const child = fakeChild({});
