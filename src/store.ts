@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
 import type { InstalledSkill } from './core/installed.js';
 import type { AgentId } from './core/agents.js';
+import type { Config } from './core/config.js';
 
 export type Screen = 'installed' | 'search' | 'detail' | 'settings';
 
@@ -38,6 +39,7 @@ export interface State {
   detail: SearchResult | null;
   ops: Record<string, OpState>;
   toasts: Toast[];
+  config: Config | null;
 }
 
 export type Action =
@@ -56,7 +58,8 @@ export type Action =
   | { type: 'op/done'; payload: { id: string } }
   | { type: 'op/error'; payload: { id: string; message: string } }
   | { type: 'toast/push'; payload: Toast }
-  | { type: 'toast/dismiss'; payload: string };
+  | { type: 'toast/dismiss'; payload: string }
+  | { type: 'config/load'; payload: Config };
 
 export const initialState: State = {
   screen: 'installed',
@@ -72,6 +75,7 @@ export const initialState: State = {
   detail: null,
   ops: {},
   toasts: [],
+  config: null,
 };
 
 export function reducer(state: State, action: Action): State {
@@ -125,6 +129,8 @@ export function reducer(state: State, action: Action): State {
       return { ...state, toasts: [...state.toasts, action.payload] };
     case 'toast/dismiss':
       return { ...state, toasts: state.toasts.filter((t) => t.id !== action.payload) };
+    case 'config/load':
+      return { ...state, config: action.payload, currentAgent: action.payload.currentAgent };
     default:
       return state;
   }

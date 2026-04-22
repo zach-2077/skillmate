@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { reducer, initialState, type Action } from '../src/store.js';
 import type { State } from '../src/store.js';
+import type { Config } from '../src/core/config.js';
 
 describe('reducer', () => {
   it('sets installed skills', () => {
@@ -101,5 +102,24 @@ describe('reducer (Phase 2)', () => {
   it('switches screen to search and detail', () => {
     expect(reducer(initialState, { type: 'screen/show', payload: 'search' }).screen).toBe('search');
     expect(reducer(initialState, { type: 'screen/show', payload: 'detail' }).screen).toBe('detail');
+  });
+});
+
+describe('reducer (Phase 3)', () => {
+  it('loads config and updates currentAgent', () => {
+    const cfg: Config = {
+      defaultAgents: ['claude-code'],
+      defaultScope: 'global',
+      confirmRemove: false,
+      autoUpdate: true,
+      currentAgent: 'cursor',
+    };
+    const next = reducer(initialState, { type: 'config/load', payload: cfg });
+    expect(next.config).toEqual(cfg);
+    expect(next.currentAgent).toBe('cursor');
+  });
+
+  it('switches screen to settings', () => {
+    expect(reducer(initialState, { type: 'screen/show', payload: 'settings' }).screen).toBe('settings');
   });
 });
