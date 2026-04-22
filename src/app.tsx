@@ -1,7 +1,31 @@
 import React, { useEffect } from 'react';
-import { StoreProvider, useStore } from './store.js';
+import { useInput } from 'ink';
+import { StoreProvider, useStore, type Screen } from './store.js';
 import { Installed } from './screens/Installed.js';
 import { refreshInstalled } from './core/installed.js';
+
+export const TAB_ORDER: readonly Screen[] = ['installed', 'search', 'settings'];
+
+export function cycleTab(current: Screen, delta: 1 | -1): Screen {
+  // 'detail' lives inside the 'search' tab — treat it as search for cycling.
+  const normalized: Screen = current === 'detail' ? 'search' : current;
+  const idx = TAB_ORDER.indexOf(normalized);
+  if (idx === -1) return 'installed';
+  const next = (idx + delta + TAB_ORDER.length) % TAB_ORDER.length;
+  return TAB_ORDER[next]!;
+}
+
+function GlobalKeys(): null {
+  const { state, dispatch } = useStore();
+  useInput((_input, key) => {
+    if (key.leftArrow) {
+      dispatch({ type: 'screen/show', payload: cycleTab(state.screen, -1) });
+    } else if (key.rightArrow) {
+      dispatch({ type: 'screen/show', payload: cycleTab(state.screen, 1) });
+    }
+  });
+  return null;
+}
 
 function Router(): React.ReactElement {
   const { state, dispatch } = useStore();
@@ -25,6 +49,7 @@ function Router(): React.ReactElement {
     case 'installed':
     case 'search':
     case 'detail':
+    case 'settings':
     default:
       return <Installed />;
   }
@@ -33,6 +58,7 @@ function Router(): React.ReactElement {
 export function App(): React.ReactElement {
   return (
     <StoreProvider>
+      <GlobalKeys />
       <Router />
     </StoreProvider>
   );

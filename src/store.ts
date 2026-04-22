@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, type ReactNode } from 're
 import type { InstalledSkill } from './core/installed.js';
 import type { AgentId } from './core/agents.js';
 
-export type Screen = 'installed' | 'search' | 'detail';
+export type Screen = 'installed' | 'search' | 'detail' | 'settings';
 
 export interface SearchResult {
   id: string;        // "owner/repo/skillId"

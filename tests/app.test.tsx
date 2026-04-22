@@ -8,7 +8,26 @@ vi.mock('../src/core/installed.js', () => ({
   ]),
 }));
 
-import { App } from '../src/app.js';
+import { App, cycleTab } from '../src/app.js';
+
+describe('cycleTab', () => {
+  it('cycles forward installed -> search -> settings -> installed', () => {
+    expect(cycleTab('installed', 1)).toBe('search');
+    expect(cycleTab('search', 1)).toBe('settings');
+    expect(cycleTab('settings', 1)).toBe('installed');
+  });
+
+  it('cycles backward installed -> settings -> search -> installed', () => {
+    expect(cycleTab('installed', -1)).toBe('settings');
+    expect(cycleTab('settings', -1)).toBe('search');
+    expect(cycleTab('search', -1)).toBe('installed');
+  });
+
+  it('treats detail as belonging to the search tab', () => {
+    expect(cycleTab('detail', 1)).toBe('settings');
+    expect(cycleTab('detail', -1)).toBe('installed');
+  });
+});
 
 describe('App', () => {
   it('renders the installed screen and loads skills', async () => {

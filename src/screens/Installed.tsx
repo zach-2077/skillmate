@@ -3,15 +3,23 @@ import { Box, Text, useInput } from 'ink';
 import { useStore } from '../store.js';
 import { knownAgentIds, agents } from '../core/agents.js';
 import type { InstalledSkill, SkillScope } from '../core/installed.js';
-import { TabBar } from '../components/TabBar.js';
+import { TabBar, type TabKey } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
+import type { Screen } from '../store.js';
 
 const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
+  ['←→', 'tab'],
   ['↑↓', 'move'],
   ['/', 'filter'],
-  ['tab', 'switch agent'],
+  ['tab', 'agent'],
   ['q', 'quit'],
 ];
+
+function screenToTab(screen: Screen): TabKey {
+  if (screen === 'search' || screen === 'detail') return 'search';
+  if (screen === 'settings') return 'settings';
+  return 'installed';
+}
 
 const FOOTER_KEYS_FILTERING: ReadonlyArray<[string, string]> = [
   ['↑↓', 'move'],
@@ -111,7 +119,7 @@ export function Installed(): React.ReactElement {
 
   return (
     <Box flexDirection="column">
-      <TabBar active="installed" agent={agents[state.currentAgent]?.displayName ?? state.currentAgent} />
+      <TabBar active={screenToTab(state.screen)} agent={agents[state.currentAgent]?.displayName ?? state.currentAgent} />
       <Box paddingX={1} marginTop={1}>
         <Text bold>Installed skills </Text>
         <Text dimColor>({filtered.length})</Text>
