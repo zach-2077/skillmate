@@ -1,0 +1,5 @@
+[
+  { "id": "anthropics/skills/pdf", "skillId": "pdf", "name": "pdf", "source": "anthropics/skills", "installs": 0 },
+  { "id": "anthropics/skills/docx", "skillId": "docx", "name": "docx", "source": "anthropics/skills", "installs": 0 },
+  { "id": "vercel-labs/agent-skills/react-best-practices", "skillId": "react-best-practices", "name": "react-best-practices", "source": "vercel-labs/agent-skills", "installs": 0 }
+]
