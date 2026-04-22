@@ -5,6 +5,7 @@ import { knownAgentIds, agents } from '../core/agents.js';
 import type { InstalledSkill, SkillScope } from '../core/installed.js';
 import { TabBar, type TabKey } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
+import { ToastList } from '../components/Toast.js';
 import type { Screen } from '../store.js';
 
 const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
@@ -155,6 +156,7 @@ export function Installed(): React.ReactElement {
           );
         })}
       </Box>
+      <ToastList toasts={state.toasts} />
       <Footer keys={filtering ? FOOTER_KEYS_FILTERING : FOOTER_KEYS} />
     </Box>
   );

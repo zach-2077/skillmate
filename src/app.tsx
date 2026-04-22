@@ -51,6 +51,14 @@ function Router(): React.ReactElement {
     };
   }, [dispatch]);
 
+  useEffect(() => {
+    if (state.toasts.length === 0) return;
+    const timers = state.toasts.map((t) =>
+      setTimeout(() => dispatch({ type: 'toast/dismiss', payload: t.id }), 3000),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [state.toasts, dispatch]);
+
   switch (state.screen) {
     case 'search':
       return <Search />;
