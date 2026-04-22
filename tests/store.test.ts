@@ -122,4 +122,11 @@ describe('reducer (Phase 3)', () => {
   it('switches screen to settings', () => {
     expect(reducer(initialState, { type: 'screen/show', payload: 'settings' }).screen).toBe('settings');
   });
+
+  it('toggles help overlay', () => {
+    const opened = reducer(initialState, { type: 'help/toggle' });
+    expect(opened.helpOpen).toBe(true);
+    const closed = reducer(opened, { type: 'help/toggle' });
+    expect(closed.helpOpen).toBe(false);
+  });
 });

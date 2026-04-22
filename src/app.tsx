@@ -5,6 +5,7 @@ import { Detail } from './screens/Detail.js';
 import { Installed } from './screens/Installed.js';
 import { Search } from './screens/Search.js';
 import { Settings } from './screens/Settings.js';
+import { Help } from './components/Help.js';
 import { refreshInstalled } from './core/installed.js';
 import { fetchPopular, DEFAULT_CACHE_DIR } from './core/registry.js';
 import { loadConfig } from './core/config.js';
@@ -22,7 +23,11 @@ export function cycleTab(current: Screen, delta: 1 | -1): Screen {
 
 function GlobalKeys(): null {
   const { state, dispatch } = useStore();
-  useInput((_input, key) => {
+  useInput((input, key) => {
+    if (input === '?') {
+      dispatch({ type: 'help/toggle' });
+      return;
+    }
     if (key.leftArrow) {
       dispatch({ type: 'screen/show', payload: cycleTab(state.screen, -1) });
     } else if (key.rightArrow) {
@@ -80,11 +85,18 @@ function Router(): React.ReactElement {
   }
 }
 
+function HelpOverlay(): React.ReactElement | null {
+  const { state } = useStore();
+  if (!state.helpOpen) return null;
+  return <Help />;
+}
+
 export function App(): React.ReactElement {
   return (
     <StoreProvider>
       <GlobalKeys />
       <Router />
+      <HelpOverlay />
     </StoreProvider>
   );
 }

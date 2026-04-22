@@ -40,6 +40,7 @@ export interface State {
   ops: Record<string, OpState>;
   toasts: Toast[];
   config: Config | null;
+  helpOpen: boolean;
 }
 
 export type Action =
@@ -59,7 +60,8 @@ export type Action =
   | { type: 'op/error'; payload: { id: string; message: string } }
   | { type: 'toast/push'; payload: Toast }
   | { type: 'toast/dismiss'; payload: string }
-  | { type: 'config/load'; payload: Config };
+  | { type: 'config/load'; payload: Config }
+  | { type: 'help/toggle' };
 
 export const initialState: State = {
   screen: 'installed',
@@ -76,6 +78,7 @@ export const initialState: State = {
   ops: {},
   toasts: [],
   config: null,
+  helpOpen: false,
 };
 
 export function reducer(state: State, action: Action): State {
@@ -131,6 +134,8 @@ export function reducer(state: State, action: Action): State {
       return { ...state, toasts: state.toasts.filter((t) => t.id !== action.payload) };
     case 'config/load':
       return { ...state, config: action.payload, currentAgent: action.payload.currentAgent };
+    case 'help/toggle':
+      return { ...state, helpOpen: !state.helpOpen };
     default:
       return state;
   }
