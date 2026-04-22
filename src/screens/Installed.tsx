@@ -13,6 +13,7 @@ import { ToastList } from '../components/Toast.js';
 import { SearchBar } from '../components/SearchBar.js';
 import type { Screen } from '../store.js';
 import { removeCanonicalSkill, disablePlugin } from '../core/remove.js';
+import { updateSkill } from '../core/update.js';
 
 const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
   ['←→', 'tab'],
@@ -20,6 +21,7 @@ const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
   ['/', 'filter'],
   ['tab', 'agent'],
   ['d', 'remove'],
+  ['u', 'update'],
   ['q', 'quit'],
 ];
 
@@ -134,6 +136,41 @@ export function Installed(): React.ReactElement {
     })();
   }
 
+  function performUpdate(skill: InstalledSkill) {
+    if (skill.scope === 'plugin-user' || skill.scope === 'plugin-project') {
+      dispatch({
+        type: 'toast/push',
+        payload: {
+          id: `t-${Date.now()}`,
+          kind: 'info',
+          text: `plugin skills update via Claude Code /plugin`,
+        },
+      });
+      return;
+    }
+    const opId = `update:${skill.name}`;
+    dispatch({ type: 'op/start', payload: { id: opId, kind: 'update' } });
+    void (async () => {
+      try {
+        await updateSkill(skill.name);
+        dispatch({ type: 'op/done', payload: { id: opId } });
+        dispatch({
+          type: 'toast/push',
+          payload: { id: `t-${Date.now()}`, kind: 'success', text: `updated ${skill.name}` },
+        });
+        const fresh = await refreshInstalled();
+        dispatch({ type: 'installed/loaded', payload: fresh });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        dispatch({ type: 'op/error', payload: { id: opId, message: msg } });
+        dispatch({
+          type: 'toast/push',
+          payload: { id: `t-${Date.now()}`, kind: 'error', text: msg },
+        });
+      }
+    })();
+  }
+
   useInput((input, key) => {
     if (removePrompt) {
       if (key.escape) return setRemovePrompt(null);
@@ -187,6 +224,10 @@ export function Installed(): React.ReactElement {
       } else {
         performRemove(skill);
       }
+      return;
+    }
+    if (input === 'u' && filtered[clampedCursor]) {
+      performUpdate(filtered[clampedCursor]!);
       return;
     }
     if (input === 'q') process.exit(0);
