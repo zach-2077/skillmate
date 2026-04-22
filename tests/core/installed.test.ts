@@ -94,6 +94,41 @@ describe('refreshInstalled', () => {
     await expect(refreshInstalled()).rejects.toThrow(/kaboom/);
   });
 
+  it('fans out universal-dir skills to all universal agents', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'skill-universal-'));
+    writeFileSync(join(dir, 'SKILL.md'), '---\nname: find-skills\ndescription: it helps\n---\n# body\n');
+    // Upstream reports the skill under ~/.agents/skills/... with only Claude Code attributed.
+    // Simulate that shape using a path that contains `.agents/skills/`.
+    const universalPath = join(dir, '.agents', 'skills', 'find-skills');
+    // We need the path to actually exist for parseFrontmatterDescription to read it,
+    // so mirror the SKILL.md in the universal subtree too.
+    const { mkdirSync, writeFileSync: wf } = await import('fs');
+    mkdirSync(universalPath, { recursive: true });
+    wf(join(universalPath, 'SKILL.md'), '---\nname: find-skills\ndescription: it helps\n---\n# body\n');
+
+    runMock
+      .mockResolvedValueOnce({ exitCode: 0, stdout: '[]', stderr: '' })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: JSON.stringify([
+          { name: 'find-skills', path: universalPath, scope: 'global', agents: ['Claude Code'] },
+        ]),
+        stderr: '',
+      });
+
+    const skills = await refreshInstalled();
+    expect(skills).toHaveLength(1);
+    const skill = skills[0]!;
+    expect(skill.agents).toContain('claude-code');   // explicit attribution preserved
+    expect(skill.agents).toContain('gemini-cli');     // fanned-out
+    expect(skill.agents).toContain('cursor');         // fanned-out
+    expect(skill.agents).toContain('github-copilot'); // fanned-out
+    // Non-universal agents are NOT added.
+    expect(skill.agents).not.toContain('continue');
+    expect(skill.agents).not.toContain('windsurf');
+    expect(skill.agents).not.toContain('roo');
+  });
+
   it('sorts canonical skills before plugin skills', async () => {
     const canonicalDir = mkdtempSync(join(tmpdir(), 'skill-canon-'));
     writeFileSync(join(canonicalDir, 'SKILL.md'), '---\nname: canon\ndescription: c\n---\n# body\n');

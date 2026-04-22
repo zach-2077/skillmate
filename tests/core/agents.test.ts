@@ -7,7 +7,17 @@ describe('agents map', () => {
       id: 'claude-code',
       displayName: 'Claude Code',
       dirName: '.claude',
+      isUniversal: false,
     });
+  });
+
+  it('flags universal-dir agents', () => {
+    expect(agents['cursor']?.isUniversal).toBe(true);
+    expect(agents['gemini-cli']?.isUniversal).toBe(true);
+    expect(agents['codex']?.isUniversal).toBe(true);
+    expect(agents['claude-code']?.isUniversal).toBe(false);
+    expect(agents['continue']?.isUniversal).toBe(false);
+    expect(agents['roo']?.isUniversal).toBe(false);
   });
 
   it('exposes a list of known agent ids', () => {
