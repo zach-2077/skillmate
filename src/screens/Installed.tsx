@@ -44,6 +44,9 @@ export function Installed(): React.ReactElement {
         {filtered.map((skill, i) => (
           <Box key={`${skill.scope}:${skill.name}`}>
             <Text color={i === cursor ? 'cyan' : undefined}>{i === cursor ? '▸ ' : '  '}</Text>
+            <Box width={3}>
+              <Text dimColor>{skill.scope === 'global' ? 'G' : 'P'}</Text>
+            </Box>
             <Box width={32}>
               <Text bold={i === cursor}>{skill.name}</Text>
             </Box>

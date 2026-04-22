@@ -14,7 +14,7 @@ describe('App', () => {
   it('renders the installed screen and loads skills', async () => {
     const { lastFrame } = render(<App />);
     await new Promise((r) => setTimeout(r, 50));
-    expect(lastFrame()).toContain('skills-gov');
+    expect(lastFrame()).toContain('agent:');
     expect(lastFrame()).toContain('demo');
   });
 });
