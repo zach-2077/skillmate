@@ -3,6 +3,14 @@
   "version": "0.0.2",
   "description": "Full-screen TUI for managing agent skills",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zach-2077/skillmate.git"
+  },
+  "homepage": "https://github.com/zach-2077/skillmate#readme",
+  "bugs": {
+    "url": "https://github.com/zach-2077/skillmate/issues"
+  },
   "type": "module",
   "bin": {
     "sm": "./dist/cli.js"
