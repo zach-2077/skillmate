@@ -3,6 +3,7 @@ import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 import { runSkillsCli } from './skills-cli.js';
 import { displayNameToId, type AgentId } from './agents.js';
+import { listPluginSkills } from './claude-plugins.js';
 
 export interface RawListEntry {
   name: string;
@@ -67,14 +68,26 @@ async function listScope(global: boolean): Promise<RawListEntry[]> {
   return JSON.parse(result.stdout) as RawListEntry[];
 }
 
+const SCOPE_ORDER: Record<SkillScope, number> = {
+  project: 0,
+  global: 1,
+  'plugin-user': 2,
+  'plugin-project': 3,
+};
+
 export async function refreshInstalled(): Promise<InstalledSkill[]> {
   const [project, global] = await Promise.all([listScope(false), listScope(true)]);
   const merged = mergeInstalledLists(project, global);
-  return merged.map((entry) => ({
+  const canonical: InstalledSkill[] = merged.map((entry) => ({
     name: entry.name,
     description: parseFrontmatterDescription(entry.path),
     scope: entry.scope,
     agents: entry.agents.map((displayName) => displayNameToId(displayName)).filter((id): id is AgentId => Boolean(id)),
     path: entry.path,
   }));
+  const plugins = listPluginSkills();
+  return [...canonical, ...plugins].sort((a, b) => {
+    const d = SCOPE_ORDER[a.scope] - SCOPE_ORDER[b.scope];
+    return d !== 0 ? d : a.name.localeCompare(b.name);
+  });
 }

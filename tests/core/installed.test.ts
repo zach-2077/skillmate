@@ -5,6 +5,7 @@ import { join } from 'path';
 
 const runMock = vi.fn();
 vi.mock('../../src/core/skills-cli.js', () => ({ runSkillsCli: (...a: unknown[]) => runMock(...a) }));
+vi.mock('../../src/core/claude-plugins.js', () => ({ listPluginSkills: () => [] }));
 
 import {
   parseFrontmatterDescription,
@@ -91,5 +92,32 @@ describe('refreshInstalled', () => {
   it('throws on non-zero exit', async () => {
     runMock.mockResolvedValueOnce({ exitCode: 1, stdout: '', stderr: 'kaboom' });
     await expect(refreshInstalled()).rejects.toThrow(/kaboom/);
+  });
+
+  it('sorts canonical skills before plugin skills', async () => {
+    const canonicalDir = mkdtempSync(join(tmpdir(), 'skill-canon-'));
+    writeFileSync(join(canonicalDir, 'SKILL.md'), '---\nname: canon\ndescription: c\n---\n# body\n');
+
+    runMock
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: JSON.stringify([
+          { name: 'canon', path: canonicalDir, scope: 'global', agents: ['Claude Code'] },
+        ]),
+        stderr: '',
+      })
+      .mockResolvedValueOnce({ exitCode: 0, stdout: '[]', stderr: '' });
+
+    // Override the listPluginSkills mock for just this test
+    const mod = await import('../../src/core/claude-plugins.js');
+    const spy = vi.spyOn(mod, 'listPluginSkills').mockReturnValue([
+      { name: 'plug:alpha', description: '', scope: 'plugin-user', agents: ['claude-code'], path: '/p/a' },
+    ]);
+
+    const skills = await refreshInstalled();
+    expect(skills.map((s) => s.scope)).toEqual(['global', 'plugin-user']);
+    expect(skills.map((s) => s.name)).toEqual(['canon', 'plug:alpha']);
+
+    spy.mockRestore();
   });
 });

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { useStore } from '../store.js';
 import { knownAgentIds, agents } from '../core/agents.js';
-import type { InstalledSkill } from '../core/installed.js';
+import type { InstalledSkill, SkillScope } from '../core/installed.js';
 import { Header } from '../components/Header.js';
 import { Footer } from '../components/Footer.js';
 
@@ -18,6 +18,19 @@ const FOOTER_KEYS_FILTERING: ReadonlyArray<[string, string]> = [
   ['enter', 'apply'],
   ['esc', 'clear'],
 ];
+
+function scopeMarker(scope: SkillScope): string {
+  switch (scope) {
+    case 'project':
+      return 'P';
+    case 'global':
+      return 'G';
+    case 'plugin-user':
+      return 'pU';
+    case 'plugin-project':
+      return 'pP';
+  }
+}
 
 function matchesFilter(skill: InstalledSkill, query: string): boolean {
   if (!query) return true;
@@ -121,8 +134,8 @@ export function Installed(): React.ReactElement {
           return (
             <Box key={`${skill.scope}:${skill.name}`}>
               <Text color={isCursor ? 'cyan' : undefined}>{isCursor ? '▸ ' : '  '}</Text>
-              <Box width={3}>
-                <Text dimColor>{skill.scope === 'global' ? 'G' : 'P'}</Text>
+              <Box width={4}>
+                <Text dimColor>{scopeMarker(skill.scope)}</Text>
               </Box>
               <Box width={32}>
                 <Text bold={isCursor}>{skill.name}</Text>
