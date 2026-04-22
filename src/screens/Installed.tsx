@@ -19,16 +19,18 @@ const FOOTER_KEYS_FILTERING: ReadonlyArray<[string, string]> = [
   ['esc', 'clear'],
 ];
 
-function scopeMarker(scope: SkillScope): string {
+const PAGE_SIZE = 10;
+
+function scopeLabel(scope: SkillScope): string {
   switch (scope) {
     case 'project':
-      return 'P';
+      return 'Project';
     case 'global':
-      return 'G';
+      return 'Global';
     case 'plugin-user':
-      return 'pU';
+      return 'Plugin-user';
     case 'plugin-project':
-      return 'pP';
+      return 'Plugin-project';
   }
 }
 
@@ -39,7 +41,7 @@ function matchesFilter(skill: InstalledSkill, query: string): boolean {
 }
 
 function viewportHeight(): number {
-  return Math.max(3, (process.stdout.rows ?? 24) - 6);
+  return Math.min(PAGE_SIZE, Math.max(3, (process.stdout.rows ?? 24) - 6));
 }
 
 export function Installed(): React.ReactElement {
@@ -134,13 +136,10 @@ export function Installed(): React.ReactElement {
           return (
             <Box key={`${skill.scope}:${skill.name}`}>
               <Text color={isCursor ? 'cyan' : undefined}>{isCursor ? '▸ ' : '  '}</Text>
-              <Box width={4}>
-                <Text dimColor>{scopeMarker(skill.scope)}</Text>
+              <Box width={16}>
+                <Text dimColor>{scopeLabel(skill.scope)}</Text>
               </Box>
-              <Box width={32}>
-                <Text bold={isCursor}>{skill.name}</Text>
-              </Box>
-              <Text dimColor>{skill.description}</Text>
+              <Text bold={isCursor}>{skill.name}</Text>
             </Box>
           );
         })}
