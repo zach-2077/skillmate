@@ -4,7 +4,7 @@ import { join } from 'path';
 import { homedir } from 'os';
 import { createRequire } from 'module';
 
-export const DEFAULT_CACHE_DIR = join(homedir(), '.cache', 'skills-gov');
+export const DEFAULT_CACHE_DIR = join(homedir(), '.cache', 'skillmate');
 
 export type SearchResult = StoreSearchResult;
 

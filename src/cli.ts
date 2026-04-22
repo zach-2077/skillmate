@@ -18,9 +18,9 @@ async function preflight(): Promise<{ ok: true } | { ok: false; reason: string }
 
 const check = await preflight();
 if (!check.ok) {
-  console.error('skills-gov: cannot find a working `skills` CLI');
+  console.error('skillmate: cannot find a working `skills` CLI');
   console.error(`reason: ${check.reason}`);
-  console.error('install it with: npm i -g skills');
+  console.error('try reinstalling: npm i -g skillmate');
   process.exit(1);
 }
 

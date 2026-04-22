@@ -28,7 +28,7 @@ describe('runSkillsCli', () => {
     const result = await runSkillsCli(['list', '--json']);
     expect(result).toEqual({ exitCode: 0, stdout: 'hello', stderr: 'warn' });
     expect(spawnMock).toHaveBeenCalledWith(
-      expect.stringMatching(/(skills|npx)/),
+      expect.stringMatching(/(node|skills|npx)/),
       expect.arrayContaining(['list', '--json']),
       expect.any(Object),
     );

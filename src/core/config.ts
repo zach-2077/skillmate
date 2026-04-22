@@ -21,7 +21,7 @@ export const defaultConfig: Config = {
 
 export const DEFAULT_CONFIG_DIR = join(
   xdgConfig ?? join(process.env.HOME ?? '.', '.config'),
-  'skills-gov',
+  'skillmate',
 );
 
 export interface IoOpts {

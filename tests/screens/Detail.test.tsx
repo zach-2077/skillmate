@@ -6,7 +6,7 @@ import { StoreProvider } from '../../src/store.js';
 
 vi.mock('../../src/core/registry.js', () => ({
   fetchSkillMd: vi.fn().mockResolvedValue('---\nname: x\n---\n# Hello\n\nbody.'),
-  DEFAULT_CACHE_DIR: '/tmp/skills-gov-detail',
+  DEFAULT_CACHE_DIR: '/tmp/skillmate-detail',
 }));
 
 describe('Detail screen', () => {

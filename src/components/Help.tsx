@@ -4,7 +4,7 @@ import { Box, Text } from 'ink';
 export function Help(): React.ReactElement {
   return (
     <Box flexDirection="column" borderStyle="round" paddingX={1} marginX={1}>
-      <Text bold>skills-gov keybinds</Text>
+      <Text bold>skillmate keybinds</Text>
       <Text> </Text>
       <Text dimColor>Global</Text>
       <Text>[left/right] cycle tabs   [?] toggle help   [q] quit</Text>

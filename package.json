@@ -1,14 +1,16 @@
 {
-  "name": "skills-gov",
+  "name": "skillmate",
   "version": "0.0.1",
   "description": "Full-screen TUI for managing agent skills",
+  "license": "MIT",
   "type": "module",
   "bin": {
-    "skills-gov": "./dist/cli.js"
+    "sm": "./dist/cli.js"
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "dev": "tsx src/cli.ts",

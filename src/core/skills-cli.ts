@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import { existsSync } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
+import { createRequire } from 'module';
 
 export interface RunResult {
   exitCode: number;
@@ -13,9 +14,20 @@ export interface RunOptions {
   cwd?: string;
 }
 
-function resolveBin(): { cmd: string; prefix: string[] } {
-  const local = join(process.cwd(), 'node_modules', '.bin', 'skills');
-  if (existsSync(local)) return { cmd: local, prefix: [] };
+const _require = createRequire(import.meta.url);
+
+export function resolveBin(): { cmd: string; prefix: string[] } {
+  try {
+    const pkgPath = _require.resolve('skills/package.json');
+    const pkg = _require('skills/package.json') as { bin?: Record<string, string> | string };
+    const binRel = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.skills;
+    if (binRel) {
+      const binPath = join(dirname(pkgPath), binRel);
+      if (existsSync(binPath)) return { cmd: process.execPath, prefix: [binPath] };
+    }
+  } catch {
+    // bundled dep unresolvable; fall through to npx
+  }
   return { cmd: 'npx', prefix: ['skills'] };
 }
 

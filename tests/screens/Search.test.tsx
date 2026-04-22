@@ -10,7 +10,7 @@ vi.mock('../../src/core/registry.js', () => ({
   ]),
   fetchPopular: vi.fn().mockResolvedValue([]),
   fetchSkillMd: vi.fn(),
-  DEFAULT_CACHE_DIR: '/tmp/skills-gov-test',
+  DEFAULT_CACHE_DIR: '/tmp/skillmate-test',
 }));
 
 vi.mock('../../src/core/install.js', () => ({

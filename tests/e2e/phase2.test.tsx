@@ -35,7 +35,7 @@ vi.mock('../../src/core/registry.js', () => ({
   ]),
   fetchPopular: vi.fn().mockResolvedValue([]),
   fetchSkillMd: vi.fn().mockResolvedValue('# react-magic'),
-  DEFAULT_CACHE_DIR: '/tmp/skills-gov-e2e',
+  DEFAULT_CACHE_DIR: '/tmp/skillmate-e2e',
 }));
 
 vi.mock('../../src/core/install.js', () => ({

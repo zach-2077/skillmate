@@ -93,7 +93,7 @@ describe('fetchPopular', () => {
   let cacheDir: string;
   beforeEach(() => {
     fetchMock.mockReset();
-    cacheDir = mkdtempSync(join(tmpdir(), 'skills-gov-cache-'));
+    cacheDir = mkdtempSync(join(tmpdir(), 'skillmate-cache-'));
   });
   afterEach(() => rmSync(cacheDir, { recursive: true, force: true }));
 
@@ -127,7 +127,7 @@ describe('fetchSkillMd', () => {
   let cacheDir: string;
   beforeEach(() => {
     fetchMock.mockReset();
-    cacheDir = mkdtempSync(join(tmpdir(), 'skills-gov-skillmd-'));
+    cacheDir = mkdtempSync(join(tmpdir(), 'skillmate-skillmd-'));
   });
   afterEach(() => rmSync(cacheDir, { recursive: true, force: true }));
 
