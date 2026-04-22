@@ -147,7 +147,7 @@ export function Installed(): React.ReactElement {
           const isCursor = globalIdx === clampedCursor;
           return (
             <Box key={`${skill.scope}:${skill.name}`}>
-              <Text color={isCursor ? 'yellow' : undefined}>{isCursor ? ') ' : '○ '}</Text>
+              <Text color={isCursor ? 'yellow' : undefined}>{isCursor ? '> ' : '○ '}</Text>
               <Text bold={isCursor} color={isCursor ? 'yellow' : undefined}>
                 {skill.name}
               </Text>

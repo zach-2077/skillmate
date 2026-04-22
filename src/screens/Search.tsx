@@ -181,7 +181,7 @@ export function Search(): React.ReactElement {
           return (
             <Box key={r.id} flexDirection="column">
               <Box>
-                <Text color={isCursor ? 'yellow' : undefined}>{isCursor ? ') ' : '○ '}</Text>
+                <Text color={isCursor ? 'yellow' : undefined}>{isCursor ? '> ' : '○ '}</Text>
                 <Text bold={isCursor} color={isCursor ? 'yellow' : undefined}>
                   {r.name}
                 </Text>
