@@ -16,6 +16,8 @@ const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
   ['esc', 'cancel'],
 ];
 
+const TWO_COLUMN_MIN_WIDTH = 80;
+
 type Row =
   | { kind: 'header'; label: string }
   | { kind: 'agent'; label: string; agentId: AgentId; detected: boolean }
@@ -54,6 +56,13 @@ function nextSelectable(rows: Row[], from: number, delta: 1 | -1): number {
     i += delta;
   }
   return from;
+}
+
+function agentRange(rows: Row[]): { start: number; end: number } {
+  const start = rows.findIndex((r) => r.kind === 'agent');
+  let end = start;
+  while (end < rows.length && rows[end]!.kind === 'agent') end += 1;
+  return { start, end };
 }
 
 export function Settings(): React.ReactElement {
@@ -120,35 +129,77 @@ export function Settings(): React.ReactElement {
     }
   }
 
+  function renderAgentRow(row: Row & { kind: 'agent' }, globalIdx: number): React.ReactElement {
+    const isCursor = globalIdx === cursor;
+    const notDetected = !row.detected;
+    return (
+      <Box key={globalIdx}>
+        <Text color={isCursor ? 'yellow' : undefined}>{isCursor ? '> ' : '  '}</Text>
+        <Text dimColor={!isCursor}>{marker(row)} </Text>
+        <Text
+          bold={isCursor}
+          color={isCursor ? 'yellow' : undefined}
+          dimColor={notDetected && !isCursor}
+        >
+          {row.label}
+        </Text>
+        {notDetected && <Text dimColor> (not detected)</Text>}
+      </Box>
+    );
+  }
+
+  function renderNonAgentRow(row: Row, i: number): React.ReactElement {
+    if (row.kind === 'header') {
+      return (
+        <Box key={`h-${i}`} marginTop={i === 0 ? 0 : 1}>
+          <Text bold>{row.label}</Text>
+        </Box>
+      );
+    }
+    const isCursor = i === cursor;
+    return (
+      <Box key={i}>
+        <Text color={isCursor ? 'yellow' : undefined}>{isCursor ? '> ' : '  '}</Text>
+        <Text dimColor={!isCursor}>{marker(row)} </Text>
+        <Text bold={isCursor} color={isCursor ? 'yellow' : undefined}>
+          {row.label}
+        </Text>
+      </Box>
+    );
+  }
+
+  const { start: agentStart, end: agentEnd } = agentRange(rows);
+  const agentRows = rows.slice(agentStart, agentEnd) as (Row & { kind: 'agent' })[];
+  const twoColumns = (process.stdout.columns ?? 80) >= TWO_COLUMN_MIN_WIDTH;
+  const rowsPerColumn = twoColumns ? Math.ceil(agentRows.length / 2) : agentRows.length;
+  const col0 = agentRows.slice(0, rowsPerColumn);
+  const col1 = agentRows.slice(rowsPerColumn);
+
   return (
     <Box flexDirection="column">
       <TabBar active="settings" />
       <Box flexDirection="column" paddingX={1} marginTop={1} flexGrow={1}>
-        {rows.map((row, i) => {
-          if (row.kind === 'header') {
-            return (
-              <Box key={`h-${i}`} marginTop={i === 0 ? 0 : 1}>
-                <Text bold>{row.label}</Text>
-              </Box>
-            );
-          }
-          const isCursor = i === cursor;
-          const notDetected = row.kind === 'agent' && !row.detected;
-          return (
-            <Box key={i}>
-              <Text color={isCursor ? 'yellow' : undefined}>{isCursor ? '> ' : '  '}</Text>
-              <Text dimColor={!isCursor}>{marker(row)} </Text>
-              <Text
-                bold={isCursor}
-                color={isCursor ? 'yellow' : undefined}
-                dimColor={notDetected && !isCursor}
-              >
-                {row.label}
-              </Text>
-              {notDetected && <Text dimColor> (not detected)</Text>}
+        {/* Pre-agent rows (expect: the first header only) */}
+        {rows.slice(0, agentStart).map((row, i) => renderNonAgentRow(row, i))}
+
+        {/* Agent rows — one or two columns */}
+        {twoColumns ? (
+          <Box flexDirection="row">
+            <Box flexDirection="column" width="50%">
+              {col0.map((row, i) => renderAgentRow(row, agentStart + i))}
             </Box>
-          );
-        })}
+            <Box flexDirection="column" width="50%">
+              {col1.map((row, i) => renderAgentRow(row, agentStart + rowsPerColumn + i))}
+            </Box>
+          </Box>
+        ) : (
+          <Box flexDirection="column">
+            {agentRows.map((row, i) => renderAgentRow(row, agentStart + i))}
+          </Box>
+        )}
+
+        {/* Post-agent rows */}
+        {rows.slice(agentEnd).map((row, i) => renderNonAgentRow(row, agentEnd + i))}
       </Box>
       <ToastList toasts={state.toasts} />
       <Footer keys={FOOTER_KEYS} />
