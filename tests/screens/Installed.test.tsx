@@ -117,4 +117,23 @@ describe('Installed screen', () => {
     // Pagination indicator shows x/N at the bottom.
     expect(lastFrame()).toContain('1/100');
   });
+
+  it('opens remove prompt on [d]', async () => {
+    const list = [
+      { name: 'pdf', description: '', scope: 'global' as const, agents: ['claude-code'], path: '/p' },
+    ];
+    const { lastFrame, stdin } = render(
+      <StoreProvider override={{
+        installed: list,
+        currentAgent: 'claude-code',
+        config: { defaultAgents: ['claude-code'], defaultScope: 'global', confirmRemove: true, autoUpdate: false, currentAgent: 'claude-code' },
+      }}>
+        <Installed />
+      </StoreProvider>,
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    stdin.write('d');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(lastFrame()).toMatch(/Remove pdf/);
+  });
 });

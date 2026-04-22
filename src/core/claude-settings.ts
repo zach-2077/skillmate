@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
 
@@ -16,6 +16,7 @@ export interface ResolveOpts {
 
 interface ClaudeSettings {
   enabledPlugins?: Record<string, boolean>;
+  [key: string]: unknown;
 }
 
 function readSettingsFile(path: string): ClaudeSettings | null {
@@ -25,6 +26,23 @@ function readSettingsFile(path: string): ClaudeSettings | null {
   } catch {
     return null;
   }
+}
+
+export function setPluginEnabled(
+  pluginKey: string,
+  enabled: boolean,
+  layer: EnablementLayer,
+  opts: ResolveOpts = {},
+): void {
+  const home = opts.home ?? homedir();
+  const cwd = opts.cwd ?? process.cwd();
+  const base = layer === 'user' ? home : cwd;
+  const dir = join(base, '.claude');
+  const file = join(dir, 'settings.json');
+  const existing = readSettingsFile(file) ?? {};
+  const enabledPlugins = { ...(existing.enabledPlugins ?? {}), [pluginKey]: enabled };
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(file, JSON.stringify({ ...existing, enabledPlugins }, null, 2));
 }
 
 /**

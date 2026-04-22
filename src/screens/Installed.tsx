@@ -1,21 +1,43 @@
 import React, { useEffect, useState } from 'react';
+import { readFileSync } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
 import { Box, Text, useInput } from 'ink';
 import { useStore } from '../store.js';
 import { knownAgentIds, agents } from '../core/agents.js';
 import type { InstalledSkill, SkillScope } from '../core/installed.js';
+import { refreshInstalled } from '../core/installed.js';
 import { TabBar, type TabKey } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
 import { ToastList } from '../components/Toast.js';
 import { SearchBar } from '../components/SearchBar.js';
 import type { Screen } from '../store.js';
+import { removeCanonicalSkill, disablePlugin } from '../core/remove.js';
 
 const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
   ['←→', 'tab'],
   ['↑↓', 'move'],
   ['/', 'filter'],
   ['tab', 'agent'],
+  ['d', 'remove'],
   ['q', 'quit'],
 ];
+
+function pluginKeyFromSkillName(name: string, _installed: InstalledSkill[]): string | null {
+  const colon = name.indexOf(':');
+  if (colon === -1) return null;
+  const short = name.slice(0, colon);
+  try {
+    const path = join(homedir(), '.claude', 'plugins', 'installed_plugins.json');
+    const data = JSON.parse(readFileSync(path, 'utf8')) as { plugins?: Record<string, unknown> };
+    for (const key of Object.keys(data.plugins ?? {})) {
+      if (key.startsWith(`${short}@`)) return key;
+    }
+  } catch {
+    // fall through
+  }
+  return null;
+}
 
 function screenToTab(screen: Screen): TabKey {
   if (screen === 'search' || screen === 'detail') return 'search';
@@ -60,6 +82,7 @@ export function Installed(): React.ReactElement {
   const [scrollOffset, setScrollOffset] = useState(0);
   const [filterQuery, setFilterQuery] = useState('');
   const [filtering, setFiltering] = useState(false);
+  const [removePrompt, setRemovePrompt] = useState<{ skill: InstalledSkill } | null>(null);
 
   const filtered = state.installed
     .filter((s) => s.agents.includes(state.currentAgent))
@@ -77,7 +100,51 @@ export function Installed(): React.ReactElement {
     setScrollOffset(0);
   }
 
+  function performRemove(skill: InstalledSkill) {
+    const opId = `remove:${skill.scope}:${skill.name}`;
+    dispatch({ type: 'op/start', payload: { id: opId, kind: 'remove' } });
+    void (async () => {
+      try {
+        if (skill.scope === 'project' || skill.scope === 'global') {
+          await removeCanonicalSkill({
+            name: skill.name,
+            agent: state.currentAgent,
+            scope: skill.scope,
+          });
+        } else {
+          const pluginKey = pluginKeyFromSkillName(skill.name, state.installed);
+          if (!pluginKey) throw new Error(`could not resolve plugin key for ${skill.name}`);
+          await disablePlugin(pluginKey, skill.scope);
+        }
+        dispatch({ type: 'op/done', payload: { id: opId } });
+        dispatch({
+          type: 'toast/push',
+          payload: { id: `t-${Date.now()}`, kind: 'success', text: `removed ${skill.name}` },
+        });
+        const fresh = await refreshInstalled();
+        dispatch({ type: 'installed/loaded', payload: fresh });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        dispatch({ type: 'op/error', payload: { id: opId, message: msg } });
+        dispatch({
+          type: 'toast/push',
+          payload: { id: `t-${Date.now()}`, kind: 'error', text: msg },
+        });
+      }
+    })();
+  }
+
   useInput((input, key) => {
+    if (removePrompt) {
+      if (key.escape) return setRemovePrompt(null);
+      if (key.return || input === 'y') {
+        const target = removePrompt.skill;
+        setRemovePrompt(null);
+        performRemove(target);
+      }
+      return;
+    }
+
     if (filtering) {
       if (key.escape) {
         setFilterQuery('');
@@ -113,6 +180,15 @@ export function Installed(): React.ReactElement {
     }
     if (key.upArrow) return setCursor((c) => Math.max(0, c - 1));
     if (key.downArrow) return setCursor((c) => Math.min(filtered.length - 1, c + 1));
+    if (input === 'd' && filtered[clampedCursor]) {
+      const skill = filtered[clampedCursor]!;
+      if (state.config?.confirmRemove ?? true) {
+        setRemovePrompt({ skill });
+      } else {
+        performRemove(skill);
+      }
+      return;
+    }
     if (input === 'q') process.exit(0);
   });
 
@@ -156,6 +232,16 @@ export function Installed(): React.ReactElement {
           </Box>
         )}
       </Box>
+      {removePrompt && (
+        <Box flexDirection="column" borderStyle="round" paddingX={1} marginX={1}>
+          <Text bold>
+            Remove {removePrompt.skill.name}
+            {removePrompt.skill.scope.startsWith('plugin') ? ' (disables the whole plugin)' : ''}?
+          </Text>
+          <Text dimColor>scope: {removePrompt.skill.scope}</Text>
+          <Text dimColor>[enter/y] confirm   [esc] cancel</Text>
+        </Box>
+      )}
       <ToastList toasts={state.toasts} />
       <Footer keys={filtering ? FOOTER_KEYS_FILTERING : FOOTER_KEYS} />
     </Box>
