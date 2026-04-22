@@ -69,3 +69,47 @@ export async function fetchPopular(opts: { cacheDir: string; signal?: AbortSigna
     return FALLBACK_POPULAR;
   }
 }
+
+const SKILL_MD_TTL_MS = 24 * 60 * 60 * 1000;
+
+export interface FetchSkillMdOpts {
+  cacheDir: string;
+  signal?: AbortSignal;
+  force?: boolean;
+}
+
+export async function fetchSkillMd(id: string, opts: FetchSkillMdOpts): Promise<string | null> {
+  const [owner, repo, ...rest] = id.split('/');
+  if (!owner || !repo || rest.length === 0) return null;
+  const skillPath = rest.join('/');
+  const cachePath = join(opts.cacheDir, owner, repo, `${skillPath}.md`);
+
+  if (!opts.force && existsSync(cachePath)) {
+    try {
+      const stat = readSyncFs(cachePath, 'utf8');
+      const newlineIdx = stat.indexOf('\n');
+      const ts = Number.parseInt(stat.slice(0, newlineIdx), 10);
+      if (!Number.isNaN(ts) && Date.now() - ts < SKILL_MD_TTL_MS) {
+        return stat.slice(newlineIdx + 1);
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  for (const branch of ['main', 'master'] as const) {
+    const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${skillPath}/SKILL.md`;
+    const res = await fetch(url, { signal: opts.signal });
+    if (res.ok) {
+      const body = await res.text();
+      mkdirSync(join(opts.cacheDir, owner, repo), { recursive: true });
+      writeFileSync(cachePath, `${Date.now()}\n${body}`);
+      return body;
+    }
+    if (res.status !== 404) {
+      // network error or rate limit - fail soft
+      return null;
+    }
+  }
+  return null;
+}

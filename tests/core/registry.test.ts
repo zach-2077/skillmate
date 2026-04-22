@@ -7,7 +7,7 @@ import { tmpdir } from 'os';
 const fetchMock = vi.fn();
 vi.stubGlobal('fetch', fetchMock);
 
-import { searchSkills, type SearchResult, popularFromHtml, fetchPopular, FALLBACK_POPULAR } from '../../src/core/registry.js';
+import { searchSkills, type SearchResult, popularFromHtml, fetchPopular, FALLBACK_POPULAR, fetchSkillMd } from '../../src/core/registry.js';
 
 function fakeJson(body: unknown, ok = true, status = 200): Response {
   return {
@@ -120,5 +120,59 @@ describe('fetchPopular', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
     const result = await fetchPopular({ cacheDir });
     expect(result).toEqual(FALLBACK_POPULAR);
+  });
+});
+
+describe('fetchSkillMd', () => {
+  let cacheDir: string;
+  beforeEach(() => {
+    fetchMock.mockReset();
+    cacheDir = mkdtempSync(join(tmpdir(), 'skills-gov-skillmd-'));
+  });
+  afterEach(() => rmSync(cacheDir, { recursive: true, force: true }));
+
+  it('fetches main first', async () => {
+    fetchMock.mockResolvedValue({ ok: true, text: async () => '# hello' } as Response);
+    const body = await fetchSkillMd('a/b/c', { cacheDir });
+    expect(body).toBe('# hello');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://raw.githubusercontent.com/a/b/main/c/SKILL.md',
+      expect.any(Object),
+    );
+  });
+
+  it('falls back to master on 404', async () => {
+    fetchMock
+      .mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+      .mockResolvedValueOnce({ ok: true, text: async () => '# from master' } as Response);
+    const body = await fetchSkillMd('a/b/c', { cacheDir });
+    expect(body).toBe('# from master');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'https://raw.githubusercontent.com/a/b/master/c/SKILL.md',
+      expect.any(Object),
+    );
+  });
+
+  it('returns null when both branches 404', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 404 } as Response);
+    const body = await fetchSkillMd('a/b/c', { cacheDir });
+    expect(body).toBeNull();
+  });
+
+  it('uses cache on second call within TTL', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true, text: async () => '# cached' } as Response);
+    await fetchSkillMd('a/b/c', { cacheDir });
+    fetchMock.mockClear();
+    const body = await fetchSkillMd('a/b/c', { cacheDir });
+    expect(body).toBe('# cached');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('refreshes when force=true', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true, text: async () => '# v1' } as Response);
+    await fetchSkillMd('a/b/c', { cacheDir });
+    fetchMock.mockResolvedValueOnce({ ok: true, text: async () => '# v2' } as Response);
+    const body = await fetchSkillMd('a/b/c', { cacheDir, force: true });
+    expect(body).toBe('# v2');
   });
 });
