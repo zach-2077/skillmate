@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useInput } from 'ink';
 import { StoreProvider, useStore, type Screen } from './store.js';
+import { Detail } from './screens/Detail.js';
 import { Installed } from './screens/Installed.js';
 import { Search } from './screens/Search.js';
 import { refreshInstalled } from './core/installed.js';
@@ -52,8 +53,9 @@ function Router(): React.ReactElement {
 
   switch (state.screen) {
     case 'search':
-    case 'detail':
       return <Search />;
+    case 'detail':
+      return <Detail />;
     case 'installed':
     case 'settings':
     default:
