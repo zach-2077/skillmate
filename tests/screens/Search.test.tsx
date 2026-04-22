@@ -33,7 +33,7 @@ describe('Search screen', () => {
       </StoreProvider>,
     );
     expect(lastFrame()).toContain('popular-skill');
-    expect(lastFrame()).toMatch(/Discover skills/i);
+    expect(lastFrame()).toMatch(/Search skills\.sh/i);
   });
 
   it('shows search results when query has 2+ chars', () => {

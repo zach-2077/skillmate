@@ -114,7 +114,7 @@ describe('Installed screen', () => {
     expect(lastFrame()).toContain('skill-009');
     expect(lastFrame()).not.toContain('skill-010');
     expect(lastFrame()).not.toContain('skill-099');
-    // Total count is shown in the section header.
-    expect(lastFrame()).toContain('Total: 100');
+    // Pagination indicator shows x/N at the bottom.
+    expect(lastFrame()).toContain('1/100');
   });
 });

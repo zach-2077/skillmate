@@ -6,6 +6,7 @@ import type { InstalledSkill, SkillScope } from '../core/installed.js';
 import { TabBar, type TabKey } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
 import { ToastList } from '../components/Toast.js';
+import { SearchBar } from '../components/SearchBar.js';
 import type { Screen } from '../store.js';
 
 const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
@@ -122,15 +123,8 @@ export function Installed(): React.ReactElement {
     <Box flexDirection="column">
       <TabBar active={screenToTab(state.screen)} agent={agents[state.currentAgent]?.displayName ?? state.currentAgent} />
       <Box paddingX={1} marginTop={1}>
-        <Text dimColor>Total: {filtered.length}</Text>
+        <SearchBar query={filterQuery} active={filtering} placeholder="Filter installed skills…" />
       </Box>
-      {(filtering || filterQuery) && (
-        <Box paddingX={1}>
-          <Text dimColor>filter: </Text>
-          <Text>{filterQuery}</Text>
-          {filtering && <Text inverse> </Text>}
-        </Box>
-      )}
       <Box flexDirection="column" paddingX={1} flexGrow={1}>
         {state.loadingInstalled && <Text dimColor>loading installed skills…</Text>}
         {state.installedError && <Text color="red">{state.installedError}</Text>}

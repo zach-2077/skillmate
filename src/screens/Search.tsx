@@ -5,6 +5,7 @@ import { searchSkills } from '../core/registry.js';
 import { TabBar } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
 import { ToastList } from '../components/Toast.js';
+import { SearchBar } from '../components/SearchBar.js';
 import { installSkill, type InstallOpts } from '../core/install.js';
 import { refreshInstalled } from '../core/installed.js';
 import type { AgentId } from '../core/agents.js';
@@ -195,16 +196,8 @@ export function Search(): React.ReactElement {
     <Box flexDirection="column">
       <TabBar active="search" />
       <Box paddingX={1} marginTop={1}>
-        <Text bold>Discover skills </Text>
-        <Text dimColor>({list.length})</Text>
+        <SearchBar query={state.searchQuery} active={inputActive} placeholder="Search skills.sh…" />
       </Box>
-      {(inputActive || state.searchQuery) && (
-        <Box paddingX={1}>
-          <Text dimColor>⌕ </Text>
-          <Text>{state.searchQuery}</Text>
-          {inputActive && <Text inverse> </Text>}
-        </Box>
-      )}
       <Box flexDirection="column" paddingX={1} flexGrow={1}>
         {state.searching && <Text dimColor>searching…</Text>}
         {state.searchError && <Text color="red">{state.searchError}</Text>}
@@ -229,6 +222,13 @@ export function Search(): React.ReactElement {
             </Box>
           );
         })}
+        {list.length > 0 && (
+          <Box marginTop={1}>
+            <Text dimColor>
+              {clampedCursor + 1}/{list.length}
+            </Text>
+          </Box>
+        )}
       </Box>
       {installPrompt && (
         <Box flexDirection="column" borderStyle="single" paddingX={1} marginX={1}>
