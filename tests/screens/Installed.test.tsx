@@ -9,6 +9,16 @@ const sample = [
   { name: 'pdf', description: 'pdf helper', scope: 'global' as const, agents: ['cursor'], path: '/p/p' },
 ];
 
+function manySkills(n: number) {
+  return Array.from({ length: n }, (_, i) => ({
+    name: `skill-${i.toString().padStart(3, '0')}`,
+    description: `description ${i}`,
+    scope: 'global' as const,
+    agents: ['claude'],
+    path: `/p/${i}`,
+  }));
+}
+
 function withStore(override = {}) {
   return render(
     <StoreProvider override={override}>
@@ -46,9 +56,62 @@ describe('Installed screen', () => {
       </StoreProvider>,
     );
     expect(lastFrame()).toContain('Claude Code');
-    await new Promise((r) => setTimeout(r, 10)); // let useEffect mount
+    await new Promise((r) => setTimeout(r, 10));
     stdin.write('\t');
-    await new Promise((r) => setTimeout(r, 10)); // let re-render
+    await new Promise((r) => setTimeout(r, 10));
     expect(lastFrame()).toContain('Cursor');
+  });
+
+  it('filters by substring when [/] is pressed', async () => {
+    const list = [
+      { name: 'git-commit', description: '', scope: 'global' as const, agents: ['claude'], path: '/p/a' },
+      { name: 'react-magic', description: '', scope: 'global' as const, agents: ['claude'], path: '/p/b' },
+      { name: 'pdf', description: '', scope: 'global' as const, agents: ['claude'], path: '/p/c' },
+    ];
+    const { lastFrame, stdin } = render(
+      <StoreProvider override={{ installed: list, currentAgent: 'claude' }}>
+        <Installed />
+      </StoreProvider>,
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    stdin.write('/');
+    await new Promise((r) => setTimeout(r, 10));
+    for (const c of 'git') {
+      stdin.write(c);
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect(lastFrame()).toContain('git-commit');
+    expect(lastFrame()).not.toContain('react-magic');
+    expect(lastFrame()).not.toContain('pdf');
+  });
+
+  it('clears filter on [esc]', async () => {
+    const list = [
+      { name: 'git-commit', description: '', scope: 'global' as const, agents: ['claude'], path: '/p/a' },
+      { name: 'pdf', description: '', scope: 'global' as const, agents: ['claude'], path: '/p/b' },
+    ];
+    const { lastFrame, stdin } = render(
+      <StoreProvider override={{ installed: list, currentAgent: 'claude' }}>
+        <Installed />
+      </StoreProvider>,
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    stdin.write('/');
+    await new Promise((r) => setTimeout(r, 10));
+    stdin.write('g');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(lastFrame()).not.toContain('pdf');
+    stdin.write(''); // ESC
+    await new Promise((r) => setTimeout(r, 10));
+    expect(lastFrame()).toContain('pdf');
+    expect(lastFrame()).toContain('git-commit');
+  });
+
+  it('shows pagination indicator when list exceeds viewport', () => {
+    const { lastFrame } = withStore({ installed: manySkills(100), currentAgent: 'claude' });
+    expect(lastFrame()).toMatch(/1\/100/);
+    // Only the first N rows visible
+    expect(lastFrame()).toContain('skill-000');
+    expect(lastFrame()).not.toContain('skill-099');
   });
 });
