@@ -209,8 +209,12 @@ export function Installed(): React.ReactElement {
 
     if (input === '/') return setFiltering(true);
     if (key.tab) {
-      const idx = knownAgentIds.indexOf(state.currentAgent);
-      const next = knownAgentIds[(idx + 1) % knownAgentIds.length]!;
+      const cycle =
+        state.config?.defaultAgents && state.config.defaultAgents.length > 0
+          ? state.config.defaultAgents
+          : knownAgentIds;
+      const idx = cycle.indexOf(state.currentAgent);
+      const next = cycle[(idx + 1) % cycle.length] ?? cycle[0]!;
       dispatch({ type: 'agent/select', payload: next });
       resetPosition();
       return;

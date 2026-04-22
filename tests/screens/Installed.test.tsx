@@ -118,6 +118,37 @@ describe('Installed screen', () => {
     expect(lastFrame()).toContain('1/100');
   });
 
+  it('cycles only through config.defaultAgents when config is set', async () => {
+    // Three agents detected but only two selected in settings.
+    const list = [
+      { name: 'a', description: '', scope: 'global' as const, agents: ['claude-code'], path: '/p/a' },
+    ];
+    const { lastFrame, stdin } = render(
+      <StoreProvider override={{
+        installed: list,
+        currentAgent: 'claude-code',
+        config: {
+          defaultAgents: ['claude-code', 'gemini-cli'],
+          defaultScope: 'global',
+          confirmRemove: true,
+          autoUpdate: false,
+          currentAgent: 'claude-code',
+        },
+      }}>
+        <Installed />
+      </StoreProvider>,
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    expect(lastFrame()).toContain('Claude Code');
+    stdin.write('\t');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(lastFrame()).toContain('Gemini CLI');
+    stdin.write('\t');
+    await new Promise((r) => setTimeout(r, 10));
+    // Wraps back to claude-code, skipping cursor, codex, etc.
+    expect(lastFrame()).toContain('Claude Code');
+  });
+
   it('opens remove prompt on [d]', async () => {
     const list = [
       { name: 'pdf', description: '', scope: 'global' as const, agents: ['claude-code'], path: '/p' },
