@@ -11,10 +11,12 @@ export interface RawListEntry {
   agents: string[];
 }
 
+export type SkillScope = 'project' | 'global' | 'plugin-user' | 'plugin-project';
+
 export interface InstalledSkill {
   name: string;
   description: string;
-  scope: 'project' | 'global';
+  scope: SkillScope;
   agents: AgentId[];
   path: string;
 }
