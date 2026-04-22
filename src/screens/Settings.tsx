@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { useStore } from '../store.js';
-import { agents, type AgentId } from '../core/agents.js';
+import { agents, knownAgentIds, type AgentId } from '../core/agents.js';
 import { detectAgents } from '../core/detect-agents.js';
 import { saveConfig, defaultConfig, type Config } from '../core/config.js';
 import { TabBar } from '../components/TabBar.js';
@@ -18,16 +18,18 @@ const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
 
 type Row =
   | { kind: 'header'; label: string }
-  | { kind: 'agent'; label: string; agentId: AgentId }
+  | { kind: 'agent'; label: string; agentId: AgentId; detected: boolean }
   | { kind: 'scope'; label: string; value: 'global' | 'project' }
   | { kind: 'confirm-remove'; label: string }
   | { kind: 'auto-update'; label: string };
 
 function buildRows(detected: AgentId[]): Row[] {
-  const agentRows: Row[] = detected.map((id) => ({
+  const detectedSet = new Set(detected);
+  const agentRows: Row[] = knownAgentIds.map((id) => ({
     kind: 'agent',
     agentId: id,
     label: agents[id]?.displayName ?? id,
+    detected: detectedSet.has(id),
   }));
   return [
     { kind: 'header', label: 'Default install targets' },
@@ -131,13 +133,19 @@ export function Settings(): React.ReactElement {
             );
           }
           const isCursor = i === cursor;
+          const notDetected = row.kind === 'agent' && !row.detected;
           return (
             <Box key={i}>
               <Text color={isCursor ? 'yellow' : undefined}>{isCursor ? '> ' : '  '}</Text>
               <Text dimColor={!isCursor}>{marker(row)} </Text>
-              <Text bold={isCursor} color={isCursor ? 'yellow' : undefined}>
+              <Text
+                bold={isCursor}
+                color={isCursor ? 'yellow' : undefined}
+                dimColor={notDetected && !isCursor}
+              >
                 {row.label}
               </Text>
+              {notDetected && <Text dimColor> (not detected)</Text>}
             </Box>
           );
         })}

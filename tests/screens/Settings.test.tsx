@@ -51,6 +51,21 @@ describe('Settings screen', () => {
     expect(lastFrame()).toMatch(/\[ \] Claude Code/);
   });
 
+  it('renders all known agents, marking undetected ones', () => {
+    const { lastFrame } = render(
+      <StoreProvider override={{ screen: 'settings', config: null }}>
+        <Settings />
+      </StoreProvider>,
+    );
+    // Detected (mocked to ['claude-code', 'cursor']) — no "(not detected)" tag.
+    expect(lastFrame()).toContain('Claude Code');
+    expect(lastFrame()).toContain('Cursor');
+    // An agent NOT in the detected mock should still appear, with the tag.
+    expect(lastFrame()).toContain('Gemini CLI');
+    expect(lastFrame()).toContain('GitHub Copilot');
+    expect(lastFrame()).toMatch(/Gemini CLI.*\(not detected\)/);
+  });
+
   it('saves and exits on enter', async () => {
     const { saveConfig } = await import('../../src/core/config.js');
     const { stdin } = render(
