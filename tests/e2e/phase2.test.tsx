@@ -2,6 +2,25 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'ink-testing-library';
 
+vi.mock('../../src/core/config.js', () => ({
+  loadConfig: vi.fn().mockReturnValue({
+    defaultAgents: ['claude-code'],
+    defaultScope: 'global',
+    confirmRemove: true,
+    autoUpdate: false,
+    currentAgent: 'claude-code',
+  }),
+  saveConfig: vi.fn(),
+  defaultConfig: {
+    defaultAgents: [],
+    defaultScope: 'global',
+    confirmRemove: true,
+    autoUpdate: false,
+    currentAgent: 'claude-code',
+  },
+  DEFAULT_CONFIG_DIR: '/tmp/sg',
+}));
+
 vi.mock('../../src/core/installed.js', () => ({
   refreshInstalled: vi.fn()
     .mockResolvedValueOnce([])

@@ -7,6 +7,7 @@ import { Search } from './screens/Search.js';
 import { Settings } from './screens/Settings.js';
 import { refreshInstalled } from './core/installed.js';
 import { fetchPopular, DEFAULT_CACHE_DIR } from './core/registry.js';
+import { loadConfig } from './core/config.js';
 
 export const TAB_ORDER: readonly Screen[] = ['installed', 'search', 'settings'];
 
@@ -36,6 +37,12 @@ function Router(): React.ReactElement {
 
   useEffect(() => {
     let cancelled = false;
+    const cfg = loadConfig();
+    if (cfg) {
+      dispatch({ type: 'config/load', payload: cfg });
+    } else {
+      dispatch({ type: 'screen/show', payload: 'settings' });
+    }
     dispatch({ type: 'installed/loading' });
     refreshInstalled()
       .then((skills) => {
