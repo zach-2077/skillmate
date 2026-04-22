@@ -1,6 +1,6 @@
 {
   "name": "skillmate",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Full-screen TUI for managing agent skills",
   "license": "MIT",
   "type": "module",
