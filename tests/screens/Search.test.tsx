@@ -86,6 +86,27 @@ describe('Search screen', () => {
     expect(lastFrame()).toContain('re');
   });
 
+  it('caps visible results at 10 and hides the rest', () => {
+    const many = Array.from({ length: 25 }, (_, i) => ({
+      id: `a/b/s${i.toString().padStart(3, '0')}`,
+      skillId: `s${i.toString().padStart(3, '0')}`,
+      name: `s${i.toString().padStart(3, '0')}`,
+      source: 'a/b',
+      installs: 0,
+    }));
+    const { lastFrame } = render(
+      <StoreProvider
+        override={{ screen: 'search', searchQuery: 'rea', searchResults: many }}
+      >
+        <Search />
+      </StoreProvider>,
+    );
+    expect(lastFrame()).toContain('s000');
+    expect(lastFrame()).toContain('s009');
+    expect(lastFrame()).not.toContain('s010');
+    expect(lastFrame()).not.toContain('s024');
+  });
+
   it('opens install prompt on [i]', async () => {
     const popular = [
       { id: 'p/q/r', skillId: 'r', name: 'popular-skill', source: 'p/q', installs: 1 },

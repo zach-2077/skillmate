@@ -25,6 +25,7 @@ const FOOTER_KEYS_PROMPT: ReadonlyArray<[string, string]> = [
 ];
 
 const DEBOUNCE_MS = 250;
+const PAGE_SIZE = 10;
 
 function formatInstalls(count: number): string {
   if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
@@ -35,6 +36,7 @@ function formatInstalls(count: number): string {
 export function Search(): React.ReactElement {
   const { state, dispatch } = useStore();
   const [cursor, setCursor] = useState(0);
+  const [scrollOffset, setScrollOffset] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [installPrompt, setInstallPrompt] = useState<{
@@ -72,6 +74,11 @@ export function Search(): React.ReactElement {
 
   const showingPopular = state.searchQuery.length < 2;
   const list = showingPopular ? state.popular : state.searchResults;
+
+  useEffect(() => {
+    if (cursor < scrollOffset) setScrollOffset(cursor);
+    else if (cursor >= scrollOffset + PAGE_SIZE) setScrollOffset(cursor - PAGE_SIZE + 1);
+  }, [cursor, scrollOffset]);
 
   useInput((input, key) => {
     if (installPrompt) {
@@ -113,6 +120,7 @@ export function Search(): React.ReactElement {
       if (state.searchQuery) {
         dispatch({ type: 'search/query', payload: '' });
         setCursor(0);
+        setScrollOffset(0);
       }
       return;
     }
@@ -143,15 +151,18 @@ export function Search(): React.ReactElement {
     if (key.backspace || key.delete) {
       dispatch({ type: 'search/query', payload: state.searchQuery.slice(0, -1) });
       setCursor(0);
+      setScrollOffset(0);
       return;
     }
     if (input && !key.ctrl && !key.meta) {
       dispatch({ type: 'search/query', payload: state.searchQuery + input });
       setCursor(0);
+      setScrollOffset(0);
     }
   });
 
   const clampedCursor = Math.min(cursor, Math.max(0, list.length - 1));
+  const visible = list.slice(scrollOffset, scrollOffset + PAGE_SIZE);
 
   return (
     <Box flexDirection="column">
@@ -176,8 +187,9 @@ export function Search(): React.ReactElement {
             {showingPopular ? 'loading popular skills…' : 'no results.'}
           </Text>
         )}
-        {list.map((r: SearchResult, i) => {
-          const isCursor = i === clampedCursor;
+        {visible.map((r: SearchResult, i) => {
+          const globalIdx = scrollOffset + i;
+          const isCursor = globalIdx === clampedCursor;
           return (
             <Box key={r.id} flexDirection="column">
               <Box>
