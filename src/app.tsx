@@ -4,6 +4,7 @@ import { StoreProvider, useStore, type Screen } from './store.js';
 import { Detail } from './screens/Detail.js';
 import { Installed } from './screens/Installed.js';
 import { Search } from './screens/Search.js';
+import { Settings } from './screens/Settings.js';
 import { refreshInstalled } from './core/installed.js';
 import { fetchPopular, DEFAULT_CACHE_DIR } from './core/registry.js';
 
@@ -64,8 +65,9 @@ function Router(): React.ReactElement {
       return <Search />;
     case 'detail':
       return <Detail />;
-    case 'installed':
     case 'settings':
+      return <Settings />;
+    case 'installed':
     default:
       return <Installed />;
   }
