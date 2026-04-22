@@ -5,7 +5,6 @@ import { searchSkills } from '../core/registry.js';
 import { TabBar } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
 import { ToastList } from '../components/Toast.js';
-import { agents } from '../core/agents.js';
 import { installSkill, type InstallOpts } from '../core/install.js';
 import { refreshInstalled } from '../core/installed.js';
 import type { AgentId } from '../core/agents.js';
@@ -13,10 +12,16 @@ import type { AgentId } from '../core/agents.js';
 const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
   ['←→', 'tab'],
   ['↑↓', 'move'],
+  ['/', 'search'],
   ['enter', 'detail'],
   ['i', 'install'],
-  ['esc', 'clear'],
   ['q', 'quit'],
+];
+
+const FOOTER_KEYS_SEARCHING: ReadonlyArray<[string, string]> = [
+  ['↑↓', 'move'],
+  ['enter', 'apply'],
+  ['esc', 'clear'],
 ];
 
 const FOOTER_KEYS_PROMPT: ReadonlyArray<[string, string]> = [
@@ -39,6 +44,7 @@ export function Search(): React.ReactElement {
   const [scrollOffset, setScrollOffset] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [inputActive, setInputActive] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<{
     result: SearchResult;
     agents: Set<AgentId>;
@@ -116,6 +122,38 @@ export function Search(): React.ReactElement {
       return; // swallow other keys while prompt is open
     }
 
+    if (inputActive) {
+      if (key.escape) {
+        dispatch({ type: 'search/query', payload: '' });
+        setInputActive(false);
+        setCursor(0);
+        setScrollOffset(0);
+        return;
+      }
+      if (key.return) {
+        setInputActive(false);
+        return;
+      }
+      if (key.upArrow) return setCursor((c) => Math.max(0, c - 1));
+      if (key.downArrow) return setCursor((c) => Math.min(list.length - 1, c + 1));
+      if (key.backspace || key.delete) {
+        dispatch({ type: 'search/query', payload: state.searchQuery.slice(0, -1) });
+        setCursor(0);
+        setScrollOffset(0);
+        return;
+      }
+      if (input && !key.ctrl && !key.meta) {
+        dispatch({ type: 'search/query', payload: state.searchQuery + input });
+        setCursor(0);
+        setScrollOffset(0);
+      }
+      return;
+    }
+
+    if (input === '/') {
+      setInputActive(true);
+      return;
+    }
     if (key.escape) {
       if (state.searchQuery) {
         dispatch({ type: 'search/query', payload: '' });
@@ -145,19 +183,8 @@ export function Search(): React.ReactElement {
       }
       return;
     }
-    if (input === 'q' && !state.searchQuery) {
+    if (input === 'q') {
       process.exit(0);
-    }
-    if (key.backspace || key.delete) {
-      dispatch({ type: 'search/query', payload: state.searchQuery.slice(0, -1) });
-      setCursor(0);
-      setScrollOffset(0);
-      return;
-    }
-    if (input && !key.ctrl && !key.meta) {
-      dispatch({ type: 'search/query', payload: state.searchQuery + input });
-      setCursor(0);
-      setScrollOffset(0);
     }
   });
 
@@ -166,19 +193,18 @@ export function Search(): React.ReactElement {
 
   return (
     <Box flexDirection="column">
-      <TabBar
-        active="search"
-        agent={agents[state.currentAgent]?.displayName ?? state.currentAgent}
-      />
+      <TabBar active="search" />
       <Box paddingX={1} marginTop={1}>
         <Text bold>Discover skills </Text>
         <Text dimColor>({list.length})</Text>
       </Box>
-      <Box paddingX={1}>
-        <Text dimColor>⌕ </Text>
-        <Text>{state.searchQuery}</Text>
-        <Text inverse> </Text>
-      </Box>
+      {(inputActive || state.searchQuery) && (
+        <Box paddingX={1}>
+          <Text dimColor>⌕ </Text>
+          <Text>{state.searchQuery}</Text>
+          {inputActive && <Text inverse> </Text>}
+        </Box>
+      )}
       <Box flexDirection="column" paddingX={1} flexGrow={1}>
         {state.searching && <Text dimColor>searching…</Text>}
         {state.searchError && <Text color="red">{state.searchError}</Text>}
@@ -213,7 +239,9 @@ export function Search(): React.ReactElement {
         </Box>
       )}
       <ToastList toasts={state.toasts} />
-      <Footer keys={installPrompt ? FOOTER_KEYS_PROMPT : FOOTER_KEYS} />
+      <Footer
+        keys={installPrompt ? FOOTER_KEYS_PROMPT : inputActive ? FOOTER_KEYS_SEARCHING : FOOTER_KEYS}
+      />
     </Box>
   );
 }

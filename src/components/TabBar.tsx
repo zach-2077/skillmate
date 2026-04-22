@@ -14,7 +14,13 @@ const TABS: Tab[] = [
   { key: 'settings', label: 'Settings' },
 ];
 
-export function TabBar({ active, agent }: { active: TabKey; agent: string }): React.ReactElement {
+export function TabBar({
+  active,
+  agent,
+}: {
+  active: TabKey;
+  agent?: string;
+}): React.ReactElement {
   return (
     <Box paddingX={1} justifyContent="space-between">
       <Box>
@@ -37,7 +43,7 @@ export function TabBar({ active, agent }: { active: TabKey; agent: string }): Re
           </React.Fragment>
         ))}
       </Box>
-      <Text dimColor>agent: {agent}</Text>
+      {agent !== undefined && <Text dimColor>agent: {agent}</Text>}
     </Box>
   );
 }

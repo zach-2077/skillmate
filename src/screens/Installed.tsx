@@ -122,8 +122,7 @@ export function Installed(): React.ReactElement {
     <Box flexDirection="column">
       <TabBar active={screenToTab(state.screen)} agent={agents[state.currentAgent]?.displayName ?? state.currentAgent} />
       <Box paddingX={1} marginTop={1}>
-        <Text bold>Installed skills </Text>
-        <Text dimColor>({filtered.length})</Text>
+        <Text dimColor>Total: {filtered.length}</Text>
       </Box>
       {(filtering || filterQuery) && (
         <Box paddingX={1}>
@@ -155,6 +154,13 @@ export function Installed(): React.ReactElement {
             </Box>
           );
         })}
+        {filtered.length > 0 && (
+          <Box marginTop={1}>
+            <Text dimColor>
+              {clampedCursor + 1}/{filtered.length}
+            </Text>
+          </Box>
+        )}
       </Box>
       <ToastList toasts={state.toasts} />
       <Footer keys={filtering ? FOOTER_KEYS_FILTERING : FOOTER_KEYS} />

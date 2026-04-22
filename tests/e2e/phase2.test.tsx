@@ -35,8 +35,11 @@ describe('Phase 2 smoke', () => {
     stdin.write('\x1b[C');
     await new Promise((r) => setTimeout(r, 20));
 
-    // Type query one char at a time (multi-char can deliver as a single input
-    // and still works, but stepwise is more deterministic)
+    // Enter search mode with [/]
+    stdin.write('/');
+    await new Promise((r) => setTimeout(r, 20));
+
+    // Type query one char at a time
     for (const c of 'rea') {
       stdin.write(c);
       await new Promise((r) => setTimeout(r, 20));
@@ -45,6 +48,10 @@ describe('Phase 2 smoke', () => {
     await new Promise((r) => setTimeout(r, 400));
 
     expect(lastFrame()).toContain('react-magic');
+
+    // Exit search input mode so [i] is treated as a command, not a character
+    stdin.write('\r');
+    await new Promise((r) => setTimeout(r, 20));
 
     // Open install prompt
     stdin.write('i');

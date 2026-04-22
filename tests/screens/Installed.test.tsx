@@ -115,7 +115,6 @@ describe('Installed screen', () => {
     expect(lastFrame()).not.toContain('skill-010');
     expect(lastFrame()).not.toContain('skill-099');
     // Total count is shown in the section header.
-    expect(lastFrame()).toContain('Installed skills');
-    expect(lastFrame()).toContain('(100)');
+    expect(lastFrame()).toContain('Total: 100');
   });
 });

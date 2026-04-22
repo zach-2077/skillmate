@@ -7,7 +7,6 @@ import { fetchSkillMd, DEFAULT_CACHE_DIR } from '../core/registry.js';
 import { TabBar } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
 import { ToastList } from '../components/Toast.js';
-import { agents } from '../core/agents.js';
 
 marked.use(markedTerminal() as Parameters<typeof marked.use>[0]);
 
@@ -65,7 +64,7 @@ export function Detail(): React.ReactElement {
   if (!detail) {
     return (
       <Box flexDirection="column">
-        <TabBar active="search" agent={agents[state.currentAgent]?.displayName ?? state.currentAgent} />
+        <TabBar active="search" />
         <Box paddingX={1} marginTop={1}>
           <Text dimColor>no skill selected</Text>
         </Box>
@@ -80,7 +79,7 @@ export function Detail(): React.ReactElement {
 
   return (
     <Box flexDirection="column">
-      <TabBar active="search" agent={agents[state.currentAgent]?.displayName ?? state.currentAgent} />
+      <TabBar active="search" />
       <Box paddingX={1} marginTop={1} justifyContent="space-between">
         <Box>
           <Text bold>{detail.name}</Text>

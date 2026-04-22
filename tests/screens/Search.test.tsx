@@ -72,7 +72,23 @@ describe('Search screen', () => {
     expect(lastFrame()).toContain('offline');
   });
 
-  it('types into search query', async () => {
+  it('types into search query after [/] focuses the input', async () => {
+    const { stdin, lastFrame } = render(
+      <StoreProvider override={{ screen: 'search', searchQuery: '' }}>
+        <Search />
+      </StoreProvider>,
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    stdin.write('/');
+    await new Promise((r) => setTimeout(r, 10));
+    stdin.write('r');
+    await new Promise((r) => setTimeout(r, 10));
+    stdin.write('e');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(lastFrame()).toContain('re');
+  });
+
+  it('does not update query when input is not focused', async () => {
     const { stdin, lastFrame } = render(
       <StoreProvider override={{ screen: 'search', searchQuery: '' }}>
         <Search />
@@ -83,7 +99,8 @@ describe('Search screen', () => {
     await new Promise((r) => setTimeout(r, 10));
     stdin.write('e');
     await new Promise((r) => setTimeout(r, 10));
-    expect(lastFrame()).toContain('re');
+    // The search bar should not show 're' because typing without [/] is ignored.
+    expect(lastFrame()).not.toMatch(/⌕ re/);
   });
 
   it('caps visible results at 10 and hides the rest', () => {
