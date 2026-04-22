@@ -75,7 +75,7 @@ describe('refreshInstalled', () => {
       name: 'demo',
       description: 'a great skill',
       scope: 'project',
-      agents: ['claude'],
+      agents: ['claude-code'],
     });
   });
 

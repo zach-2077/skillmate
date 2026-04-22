@@ -4,7 +4,7 @@ import { render } from 'ink-testing-library';
 
 vi.mock('../src/core/installed.js', () => ({
   refreshInstalled: vi.fn().mockResolvedValue([
-    { name: 'demo', description: 'd', scope: 'global', agents: ['claude'], path: '/p/d' },
+    { name: 'demo', description: 'd', scope: 'global', agents: ['claude-code'], path: '/p/d' },
   ]),
 }));
 

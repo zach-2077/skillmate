@@ -21,7 +21,7 @@ export type Action =
 
 export const initialState: State = {
   screen: 'installed',
-  currentAgent: 'claude',
+  currentAgent: 'claude-code',
   installed: [],
   loadingInstalled: false,
   installedError: null,

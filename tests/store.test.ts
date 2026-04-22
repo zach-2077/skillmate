@@ -6,7 +6,7 @@ describe('reducer', () => {
     const action: Action = {
       type: 'installed/loaded',
       payload: [
-        { name: 'a', description: '', scope: 'global', agents: ['claude'], path: '/p/a' },
+        { name: 'a', description: '', scope: 'global', agents: ['claude-code'], path: '/p/a' },
       ],
     };
     const next = reducer(initialState, action);

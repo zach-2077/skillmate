@@ -5,7 +5,7 @@ import { Installed } from '../../src/screens/Installed.js';
 import { StoreProvider } from '../../src/store.js';
 
 const sample = [
-  { name: 'react', description: 'react helper', scope: 'global' as const, agents: ['claude'], path: '/p/r' },
+  { name: 'react', description: 'react helper', scope: 'global' as const, agents: ['claude-code'], path: '/p/r' },
   { name: 'pdf', description: 'pdf helper', scope: 'global' as const, agents: ['cursor'], path: '/p/p' },
 ];
 
@@ -14,7 +14,7 @@ function manySkills(n: number) {
     name: `skill-${i.toString().padStart(3, '0')}`,
     description: `description ${i}`,
     scope: 'global' as const,
-    agents: ['claude'],
+    agents: ['claude-code'],
     path: `/p/${i}`,
   }));
 }
@@ -29,7 +29,7 @@ function withStore(override = {}) {
 
 describe('Installed screen', () => {
   it('renders only skills for current agent', () => {
-    const { lastFrame } = withStore({ installed: sample, currentAgent: 'claude' });
+    const { lastFrame } = withStore({ installed: sample, currentAgent: 'claude-code' });
     expect(lastFrame()).toContain('react');
     expect(lastFrame()).not.toContain('pdf');
   });
@@ -51,7 +51,7 @@ describe('Installed screen', () => {
 
   it('cycles current agent on tab', async () => {
     const { lastFrame, stdin } = render(
-      <StoreProvider override={{ installed: sample, currentAgent: 'claude' }}>
+      <StoreProvider override={{ installed: sample, currentAgent: 'claude-code' }}>
         <Installed />
       </StoreProvider>,
     );
@@ -64,12 +64,12 @@ describe('Installed screen', () => {
 
   it('filters by substring when [/] is pressed', async () => {
     const list = [
-      { name: 'git-commit', description: '', scope: 'global' as const, agents: ['claude'], path: '/p/a' },
-      { name: 'react-magic', description: '', scope: 'global' as const, agents: ['claude'], path: '/p/b' },
-      { name: 'pdf', description: '', scope: 'global' as const, agents: ['claude'], path: '/p/c' },
+      { name: 'git-commit', description: '', scope: 'global' as const, agents: ['claude-code'], path: '/p/a' },
+      { name: 'react-magic', description: '', scope: 'global' as const, agents: ['claude-code'], path: '/p/b' },
+      { name: 'pdf', description: '', scope: 'global' as const, agents: ['claude-code'], path: '/p/c' },
     ];
     const { lastFrame, stdin } = render(
-      <StoreProvider override={{ installed: list, currentAgent: 'claude' }}>
+      <StoreProvider override={{ installed: list, currentAgent: 'claude-code' }}>
         <Installed />
       </StoreProvider>,
     );
@@ -87,11 +87,11 @@ describe('Installed screen', () => {
 
   it('clears filter on [esc]', async () => {
     const list = [
-      { name: 'git-commit', description: '', scope: 'global' as const, agents: ['claude'], path: '/p/a' },
-      { name: 'pdf', description: '', scope: 'global' as const, agents: ['claude'], path: '/p/b' },
+      { name: 'git-commit', description: '', scope: 'global' as const, agents: ['claude-code'], path: '/p/a' },
+      { name: 'pdf', description: '', scope: 'global' as const, agents: ['claude-code'], path: '/p/b' },
     ];
     const { lastFrame, stdin } = render(
-      <StoreProvider override={{ installed: list, currentAgent: 'claude' }}>
+      <StoreProvider override={{ installed: list, currentAgent: 'claude-code' }}>
         <Installed />
       </StoreProvider>,
     );
@@ -108,7 +108,7 @@ describe('Installed screen', () => {
   });
 
   it('shows pagination indicator when list exceeds viewport', () => {
-    const { lastFrame } = withStore({ installed: manySkills(100), currentAgent: 'claude' });
+    const { lastFrame } = withStore({ installed: manySkills(100), currentAgent: 'claude-code' });
     expect(lastFrame()).toMatch(/1\/100/);
     // Only the first N rows visible
     expect(lastFrame()).toContain('skill-000');
