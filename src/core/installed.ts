@@ -1,4 +1,5 @@
-import { readFileSync } from 'fs';
+import { readFileSync, statSync } from 'fs';
+import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 import { runSkillsCli } from './skills-cli.js';
 import { displayNameToId, type AgentId } from './agents.js';
@@ -20,10 +21,11 @@ export interface InstalledSkill {
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---/;
 
-export function parseFrontmatterDescription(skillMdPath: string): string {
+export function parseFrontmatterDescription(pathOrDir: string): string {
   let raw: string;
   try {
-    raw = readFileSync(skillMdPath, 'utf8');
+    const target = statSync(pathOrDir).isDirectory() ? join(pathOrDir, 'SKILL.md') : pathOrDir;
+    raw = readFileSync(target, 'utf8');
   } catch {
     return '';
   }

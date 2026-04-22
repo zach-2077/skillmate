@@ -40,6 +40,12 @@ describe('parseFrontmatterDescription', () => {
     writeFileSync(path, '---\r\nname: x\r\ndescription: hello crlf\r\n---\r\n# body\r\n');
     expect(parseFrontmatterDescription(path)).toBe('hello crlf');
   });
+
+  it('accepts a directory path and reads SKILL.md inside it', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'skill-dir-'));
+    writeFileSync(join(dir, 'SKILL.md'), '---\nname: x\ndescription: dir path works\n---\n# body\n');
+    expect(parseFrontmatterDescription(dir)).toBe('dir path works');
+  });
 });
 
 describe('mergeInstalledLists', () => {
@@ -60,11 +66,14 @@ describe('refreshInstalled', () => {
   beforeEach(() => runMock.mockReset());
 
   it('combines project and global outputs and parses descriptions', async () => {
-    const path = tmpSkill('a great skill');
+    // Upstream's `skills list --json` returns `path` as a DIRECTORY (canonicalPath),
+    // not a SKILL.md file. Match that contract here.
+    const dir = mkdtempSync(join(tmpdir(), 'skill-real-'));
+    writeFileSync(join(dir, 'SKILL.md'), '---\nname: demo\ndescription: a great skill\n---\n# body\n');
     runMock
       .mockResolvedValueOnce({
         exitCode: 0,
-        stdout: JSON.stringify([{ name: 'demo', path, scope: 'project', agents: ['Claude Code'] }]),
+        stdout: JSON.stringify([{ name: 'demo', path: dir, scope: 'project', agents: ['Claude Code'] }]),
         stderr: '',
       })
       .mockResolvedValueOnce({ exitCode: 0, stdout: '[]', stderr: '' });
