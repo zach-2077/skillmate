@@ -107,11 +107,15 @@ describe('Installed screen', () => {
     expect(lastFrame()).toContain('git-commit');
   });
 
-  it('shows pagination indicator when list exceeds viewport', () => {
+  it('caps the visible page and hides rows beyond the cap', () => {
     const { lastFrame } = withStore({ installed: manySkills(100), currentAgent: 'claude-code' });
-    expect(lastFrame()).toMatch(/1\/100/);
-    // Only the first N rows visible
+    // Page size is 10; first 10 rows render, the rest are hidden.
     expect(lastFrame()).toContain('skill-000');
+    expect(lastFrame()).toContain('skill-009');
+    expect(lastFrame()).not.toContain('skill-010');
     expect(lastFrame()).not.toContain('skill-099');
+    // Total count is shown in the section header.
+    expect(lastFrame()).toContain('Installed skills');
+    expect(lastFrame()).toContain('(100)');
   });
 });

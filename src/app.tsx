@@ -23,6 +23,9 @@ function Router(): React.ReactElement {
 
   switch (state.screen) {
     case 'installed':
+    case 'search':
+    case 'detail':
+    default:
       return <Installed />;
   }
 }

@@ -3,7 +3,7 @@ import { Box, Text, useInput } from 'ink';
 import { useStore } from '../store.js';
 import { knownAgentIds, agents } from '../core/agents.js';
 import type { InstalledSkill, SkillScope } from '../core/installed.js';
-import { Header } from '../components/Header.js';
+import { TabBar } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
 
 const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
@@ -108,11 +108,14 @@ export function Installed(): React.ReactElement {
 
   const clampedCursor = Math.min(cursor, Math.max(0, filtered.length - 1));
   const visible = filtered.slice(scrollOffset, scrollOffset + rows);
-  const hasMore = filtered.length > rows;
 
   return (
     <Box flexDirection="column">
-      <Header agent={agents[state.currentAgent]?.displayName ?? state.currentAgent} />
+      <TabBar active="installed" agent={agents[state.currentAgent]?.displayName ?? state.currentAgent} />
+      <Box paddingX={1} marginTop={1}>
+        <Text bold>Installed skills </Text>
+        <Text dimColor>({filtered.length})</Text>
+      </Box>
       {(filtering || filterQuery) && (
         <Box paddingX={1}>
           <Text dimColor>filter: </Text>
@@ -135,19 +138,14 @@ export function Installed(): React.ReactElement {
           const isCursor = globalIdx === clampedCursor;
           return (
             <Box key={`${skill.scope}:${skill.name}`}>
-              <Text color={isCursor ? 'cyan' : undefined}>{isCursor ? '▸ ' : '  '}</Text>
-              <Box width={16}>
-                <Text dimColor>{scopeLabel(skill.scope)}</Text>
-              </Box>
-              <Text bold={isCursor}>{skill.name}</Text>
+              <Text color={isCursor ? 'yellow' : undefined}>{isCursor ? ') ' : '○ '}</Text>
+              <Text bold={isCursor} color={isCursor ? 'yellow' : undefined}>
+                {skill.name}
+              </Text>
+              <Text dimColor> · {scopeLabel(skill.scope)}</Text>
             </Box>
           );
         })}
-        {hasMore && (
-          <Text dimColor>
-            {clampedCursor + 1}/{filtered.length}
-          </Text>
-        )}
       </Box>
       <Footer keys={filtering ? FOOTER_KEYS_FILTERING : FOOTER_KEYS} />
     </Box>

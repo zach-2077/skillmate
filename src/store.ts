@@ -2,7 +2,27 @@ import React, { createContext, useContext, useReducer, type ReactNode } from 're
 import type { InstalledSkill } from './core/installed.js';
 import type { AgentId } from './core/agents.js';
 
-export type Screen = 'installed';
+export type Screen = 'installed' | 'search' | 'detail';
+
+export interface SearchResult {
+  id: string;        // "owner/repo/skillId"
+  skillId: string;
+  name: string;
+  source: string;    // "owner/repo"
+  installs: number;
+}
+
+export interface OpState {
+  kind: 'install' | 'remove' | 'update';
+  state: 'running' | 'error';
+  message?: string;
+}
+
+export interface Toast {
+  id: string;
+  kind: 'info' | 'error' | 'success';
+  text: string;
+}
 
 export interface State {
   screen: Screen;
@@ -10,6 +30,14 @@ export interface State {
   installed: InstalledSkill[];
   loadingInstalled: boolean;
   installedError: string | null;
+  searchQuery: string;
+  searching: boolean;
+  searchError: string | null;
+  searchResults: SearchResult[];
+  popular: SearchResult[];
+  detail: SearchResult | null;
+  ops: Record<string, OpState>;
+  toasts: Toast[];
 }
 
 export type Action =
@@ -17,7 +45,18 @@ export type Action =
   | { type: 'installed/loaded'; payload: InstalledSkill[] }
   | { type: 'installed/error'; payload: string }
   | { type: 'agent/select'; payload: AgentId }
-  | { type: 'screen/show'; payload: Screen };
+  | { type: 'screen/show'; payload: Screen }
+  | { type: 'search/query'; payload: string }
+  | { type: 'search/loading' }
+  | { type: 'search/results'; payload: { query: string; results: SearchResult[] } }
+  | { type: 'search/error'; payload: string }
+  | { type: 'popular/loaded'; payload: SearchResult[] }
+  | { type: 'detail/select'; payload: SearchResult }
+  | { type: 'op/start'; payload: { id: string; kind: OpState['kind'] } }
+  | { type: 'op/done'; payload: { id: string } }
+  | { type: 'op/error'; payload: { id: string; message: string } }
+  | { type: 'toast/push'; payload: Toast }
+  | { type: 'toast/dismiss'; payload: string };
 
 export const initialState: State = {
   screen: 'installed',
@@ -25,6 +64,14 @@ export const initialState: State = {
   installed: [],
   loadingInstalled: false,
   installedError: null,
+  searchQuery: '',
+  searching: false,
+  searchError: null,
+  searchResults: [],
+  popular: [],
+  detail: null,
+  ops: {},
+  toasts: [],
 };
 
 export function reducer(state: State, action: Action): State {
@@ -39,6 +86,45 @@ export function reducer(state: State, action: Action): State {
       return { ...state, currentAgent: action.payload };
     case 'screen/show':
       return { ...state, screen: action.payload };
+    case 'search/query':
+      return { ...state, searchQuery: action.payload };
+    case 'search/loading':
+      return { ...state, searching: true, searchError: null };
+    case 'search/results':
+      return state.searchQuery === action.payload.query
+        ? { ...state, searching: false, searchResults: action.payload.results }
+        : state;
+    case 'search/error':
+      return { ...state, searching: false, searchError: action.payload };
+    case 'popular/loaded':
+      return { ...state, popular: action.payload };
+    case 'detail/select':
+      return { ...state, detail: action.payload };
+    case 'op/start':
+      return {
+        ...state,
+        ops: { ...state.ops, [action.payload.id]: { kind: action.payload.kind, state: 'running' } },
+      };
+    case 'op/done': {
+      const { [action.payload.id]: _, ...rest } = state.ops;
+      return { ...state, ops: rest };
+    }
+    case 'op/error':
+      return {
+        ...state,
+        ops: {
+          ...state.ops,
+          [action.payload.id]: {
+            kind: state.ops[action.payload.id]?.kind ?? 'install',
+            state: 'error',
+            message: action.payload.message,
+          },
+        },
+      };
+    case 'toast/push':
+      return { ...state, toasts: [...state.toasts, action.payload] };
+    case 'toast/dismiss':
+      return { ...state, toasts: state.toasts.filter((t) => t.id !== action.payload) };
     default:
       return state;
   }
