@@ -6,13 +6,22 @@ import { TabBar } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
 import { ToastList } from '../components/Toast.js';
 import { agents } from '../core/agents.js';
+import { installSkill, type InstallOpts } from '../core/install.js';
+import { refreshInstalled } from '../core/installed.js';
+import type { AgentId } from '../core/agents.js';
 
 const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
   ['←→', 'tab'],
   ['↑↓', 'move'],
   ['enter', 'detail'],
+  ['i', 'install'],
   ['esc', 'clear'],
   ['q', 'quit'],
+];
+
+const FOOTER_KEYS_PROMPT: ReadonlyArray<[string, string]> = [
+  ['enter', 'confirm'],
+  ['esc', 'cancel'],
 ];
 
 const DEBOUNCE_MS = 250;
@@ -28,6 +37,11 @@ export function Search(): React.ReactElement {
   const [cursor, setCursor] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<{
+    result: SearchResult;
+    agents: Set<AgentId>;
+    scope: 'global' | 'project';
+  } | null>(null);
 
   useEffect(() => {
     if (state.searchQuery.length < 2) {
@@ -60,6 +74,41 @@ export function Search(): React.ReactElement {
   const list = showingPopular ? state.popular : state.searchResults;
 
   useInput((input, key) => {
+    if (installPrompt) {
+      if (key.escape) return setInstallPrompt(null);
+      if (key.return) {
+        const opts: InstallOpts = {
+          id: installPrompt.result.id,
+          agents: [...installPrompt.agents],
+          scope: installPrompt.scope,
+        };
+        const opId = installPrompt.result.id;
+        setInstallPrompt(null);
+        dispatch({ type: 'op/start', payload: { id: opId, kind: 'install' } });
+        void (async () => {
+          try {
+            await installSkill(opts);
+            dispatch({ type: 'op/done', payload: { id: opId } });
+            dispatch({
+              type: 'toast/push',
+              payload: { id: `t-${Date.now()}`, kind: 'success', text: `installed ${opts.id}` },
+            });
+            const fresh = await refreshInstalled();
+            dispatch({ type: 'installed/loaded', payload: fresh });
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            dispatch({ type: 'op/error', payload: { id: opId, message: msg } });
+            dispatch({
+              type: 'toast/push',
+              payload: { id: `t-${Date.now()}`, kind: 'error', text: msg },
+            });
+          }
+        })();
+        return;
+      }
+      return; // swallow other keys while prompt is open
+    }
+
     if (key.escape) {
       if (state.searchQuery) {
         dispatch({ type: 'search/query', payload: '' });
@@ -74,6 +123,17 @@ export function Search(): React.ReactElement {
       if (selected) {
         dispatch({ type: 'detail/select', payload: selected });
         dispatch({ type: 'screen/show', payload: 'detail' });
+      }
+      return;
+    }
+    if (input === 'i') {
+      const selected = list[Math.min(cursor, list.length - 1)];
+      if (selected) {
+        setInstallPrompt({
+          result: selected,
+          agents: new Set([state.currentAgent]),
+          scope: 'global',
+        });
       }
       return;
     }
@@ -132,8 +192,16 @@ export function Search(): React.ReactElement {
           );
         })}
       </Box>
+      {installPrompt && (
+        <Box flexDirection="column" borderStyle="single" paddingX={1} marginX={1}>
+          <Text bold>Install {installPrompt.result.id}</Text>
+          <Text dimColor>Target agents: {[...installPrompt.agents].join(', ')}</Text>
+          <Text dimColor>Scope: {installPrompt.scope}</Text>
+          <Text dimColor>[enter] confirm   [esc] cancel</Text>
+        </Box>
+      )}
       <ToastList toasts={state.toasts} />
-      <Footer keys={FOOTER_KEYS} />
+      <Footer keys={installPrompt ? FOOTER_KEYS_PROMPT : FOOTER_KEYS} />
     </Box>
   );
 }

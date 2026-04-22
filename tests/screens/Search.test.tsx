@@ -13,6 +13,15 @@ vi.mock('../../src/core/registry.js', () => ({
   DEFAULT_CACHE_DIR: '/tmp/skills-gov-test',
 }));
 
+vi.mock('../../src/core/install.js', () => ({
+  installSkill: vi.fn().mockResolvedValue(undefined),
+  buildAddArgs: vi.fn(),
+}));
+
+vi.mock('../../src/core/installed.js', () => ({
+  refreshInstalled: vi.fn().mockResolvedValue([]),
+}));
+
 describe('Search screen', () => {
   it('shows popular list when query is empty', () => {
     const popular = [
@@ -75,5 +84,20 @@ describe('Search screen', () => {
     stdin.write('e');
     await new Promise((r) => setTimeout(r, 10));
     expect(lastFrame()).toContain('re');
+  });
+
+  it('opens install prompt on [i]', async () => {
+    const popular = [
+      { id: 'p/q/r', skillId: 'r', name: 'popular-skill', source: 'p/q', installs: 1 },
+    ];
+    const { lastFrame, stdin } = render(
+      <StoreProvider override={{ screen: 'search', popular, currentAgent: 'claude-code' }}>
+        <Search />
+      </StoreProvider>,
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    stdin.write('i');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(lastFrame()).toMatch(/Install p\/q\/r/);
   });
 });
