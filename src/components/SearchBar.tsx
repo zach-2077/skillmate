@@ -18,7 +18,7 @@ export function SearchBar({
   return (
     <Box
       width={width}
-      borderStyle="single"
+      borderStyle="round"
       borderColor={active ? 'yellow' : 'gray'}
       paddingX={1}
     >
