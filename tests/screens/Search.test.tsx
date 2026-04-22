@@ -1,0 +1,79 @@
+import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
+import { render } from 'ink-testing-library';
+import { Search } from '../../src/screens/Search.js';
+import { StoreProvider } from '../../src/store.js';
+
+vi.mock('../../src/core/registry.js', () => ({
+  searchSkills: vi.fn().mockResolvedValue([
+    { id: 'a/b/c', skillId: 'c', name: 'react-magic', source: 'a/b', installs: 999 },
+  ]),
+  fetchPopular: vi.fn().mockResolvedValue([]),
+  fetchSkillMd: vi.fn(),
+  DEFAULT_CACHE_DIR: '/tmp/skills-gov-test',
+}));
+
+describe('Search screen', () => {
+  it('shows popular list when query is empty', () => {
+    const popular = [
+      { id: 'p/q/r', skillId: 'r', name: 'popular-skill', source: 'p/q', installs: 1 },
+    ];
+    const { lastFrame } = render(
+      <StoreProvider override={{ screen: 'search', popular }}>
+        <Search />
+      </StoreProvider>,
+    );
+    expect(lastFrame()).toContain('popular-skill');
+    expect(lastFrame()).toMatch(/Discover skills/i);
+  });
+
+  it('shows search results when query has 2+ chars', () => {
+    const results = [
+      { id: 'a/b/c', skillId: 'c', name: 'react-magic', source: 'a/b', installs: 999 },
+    ];
+    const { lastFrame } = render(
+      <StoreProvider
+        override={{ screen: 'search', searchQuery: 'rea', searchResults: results }}
+      >
+        <Search />
+      </StoreProvider>,
+    );
+    expect(lastFrame()).toContain('react-magic');
+  });
+
+  it('shows searching indicator', () => {
+    const { lastFrame } = render(
+      <StoreProvider
+        override={{ screen: 'search', searchQuery: 'rea', searching: true }}
+      >
+        <Search />
+      </StoreProvider>,
+    );
+    expect(lastFrame()).toMatch(/searching/i);
+  });
+
+  it('shows error when search fails', () => {
+    const { lastFrame } = render(
+      <StoreProvider
+        override={{ screen: 'search', searchQuery: 'rea', searchError: 'offline' }}
+      >
+        <Search />
+      </StoreProvider>,
+    );
+    expect(lastFrame()).toContain('offline');
+  });
+
+  it('types into search query', async () => {
+    const { stdin, lastFrame } = render(
+      <StoreProvider override={{ screen: 'search', searchQuery: '' }}>
+        <Search />
+      </StoreProvider>,
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    stdin.write('r');
+    await new Promise((r) => setTimeout(r, 10));
+    stdin.write('e');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(lastFrame()).toContain('re');
+  });
+});

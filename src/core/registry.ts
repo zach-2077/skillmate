@@ -1,7 +1,10 @@
 import type { SearchResult as StoreSearchResult } from '../store.js';
 import { readFileSync as readSyncFs, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
+import { homedir } from 'os';
 import { createRequire } from 'module';
+
+export const DEFAULT_CACHE_DIR = join(homedir(), '.cache', 'skills-gov');
 
 export type SearchResult = StoreSearchResult;
 

@@ -2,7 +2,9 @@ import React, { useEffect } from 'react';
 import { useInput } from 'ink';
 import { StoreProvider, useStore, type Screen } from './store.js';
 import { Installed } from './screens/Installed.js';
+import { Search } from './screens/Search.js';
 import { refreshInstalled } from './core/installed.js';
+import { fetchPopular, DEFAULT_CACHE_DIR } from './core/registry.js';
 
 export const TAB_ORDER: readonly Screen[] = ['installed', 'search', 'settings'];
 
@@ -40,15 +42,19 @@ function Router(): React.ReactElement {
       .catch((err: Error) => {
         if (!cancelled) dispatch({ type: 'installed/error', payload: err.message });
       });
+    fetchPopular({ cacheDir: DEFAULT_CACHE_DIR })
+      .then((p) => { if (!cancelled) dispatch({ type: 'popular/loaded', payload: p }); })
+      .catch(() => { /* fallback baked in */ });
     return () => {
       cancelled = true;
     };
   }, [dispatch]);
 
   switch (state.screen) {
-    case 'installed':
     case 'search':
     case 'detail':
+      return <Search />;
+    case 'installed':
     case 'settings':
     default:
       return <Installed />;
