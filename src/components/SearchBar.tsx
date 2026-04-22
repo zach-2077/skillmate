@@ -1,6 +1,10 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 
+function terminalWidth(): number {
+  return process.stdout.columns ?? 80;
+}
+
 export function SearchBar({
   query,
   active,
@@ -10,8 +14,14 @@ export function SearchBar({
   active: boolean;
   placeholder?: string;
 }): React.ReactElement {
+  const width = Math.max(20, Math.floor(terminalWidth() * 0.9));
   return (
-    <Box borderStyle="single" borderColor={active ? 'yellow' : 'gray'} paddingX={1}>
+    <Box
+      width={width}
+      borderStyle="single"
+      borderColor={active ? 'yellow' : 'gray'}
+      paddingX={1}
+    >
       <Text dimColor>⌕ </Text>
       {query ? (
         <Box>
