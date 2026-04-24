@@ -6,7 +6,7 @@ import { Box, Text, useInput } from 'ink';
 import { useStore } from '../store.js';
 import { knownAgentIds, agents } from '../core/agents.js';
 import type { InstalledSkill, SkillScope } from '../core/installed.js';
-import { refreshInstalled } from '../core/installed.js';
+import { refreshInstalled, isUniversalPath } from '../core/installed.js';
 import { TabBar, type TabKey } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
 import { ToastList } from '../components/Toast.js';
@@ -136,6 +136,7 @@ export function Installed(): React.ReactElement {
             name: skill.name,
             agent: state.currentAgent,
             scope: skill.scope,
+            allAgents: isUniversalPath(skill.path),
           });
         } else if (skill.scope === 'plugin-user' || skill.scope === 'plugin-project') {
           const pluginKey = pluginKeyFromSkillName(skill.name, state.installed);

@@ -11,10 +11,12 @@ export interface CanonicalRemoveOpts {
   name: string;
   agent: AgentId;
   scope: 'project' | 'global';
+  allAgents?: boolean;
 }
 
 export function buildRemoveArgs(opts: CanonicalRemoveOpts): string[] {
-  const args = ['remove', opts.name, '-a', opts.agent];
+  const args = ['remove', opts.name];
+  if (!opts.allAgents) args.push('-a', opts.agent);
   if (opts.scope === 'global') args.push('-g');
   args.push('-y');
   return args;

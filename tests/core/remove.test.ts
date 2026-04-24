@@ -22,6 +22,12 @@ describe('buildRemoveArgs', () => {
       'remove', 'pdf', '-a', 'claude-code', '-y',
     ]);
   });
+
+  it('omits -a when allAgents is true', () => {
+    expect(buildRemoveArgs({ name: 'pdf', agent: 'claude-code', scope: 'global', allAgents: true })).toEqual([
+      'remove', 'pdf', '-g', '-y',
+    ]);
+  });
 });
 
 describe('removeCanonicalSkill', () => {
