@@ -6,16 +6,34 @@ vi.mock('../../src/core/skills-cli.js', () => ({ runSkillsCli: (...a: unknown[])
 import { buildAddArgs, installSkill } from '../../src/core/install.js';
 
 describe('buildAddArgs', () => {
-  it('builds args with multiple agents and global scope', () => {
+  it('splits a 3-segment id into source + --skill', () => {
     expect(buildAddArgs({ id: 'a/b/c', agents: ['claude-code', 'cursor'], scope: 'global' })).toEqual([
-      'add', 'a/b/c', '-a', 'claude-code', '-a', 'cursor', '-g', '-y',
+      'add', 'a/b', '--skill', 'c', '-a', 'claude-code', '-a', 'cursor', '-g', '-y',
     ]);
   });
 
   it('omits -g for project scope', () => {
     expect(buildAddArgs({ id: 'a/b/c', agents: ['claude-code'], scope: 'project' })).toEqual([
-      'add', 'a/b/c', '-a', 'claude-code', '-y',
+      'add', 'a/b', '--skill', 'c', '-a', 'claude-code', '-y',
     ]);
+  });
+
+  it('passes a 2-segment id through as the source', () => {
+    expect(buildAddArgs({ id: 'a/b', agents: ['claude-code'], scope: 'global' })).toEqual([
+      'add', 'a/b', '-a', 'claude-code', '-g', '-y',
+    ]);
+  });
+
+  it('prefers structured source + skillId over splitting the id', () => {
+    expect(
+      buildAddArgs({
+        id: 'smithery.ai/frontend-design',
+        source: 'smithery.ai',
+        skillId: 'frontend-design',
+        agents: ['codex'],
+        scope: 'global',
+      }),
+    ).toEqual(['add', 'smithery.ai', '--skill', 'frontend-design', '-a', 'codex', '-g', '-y']);
   });
 });
 
@@ -34,5 +52,19 @@ describe('installSkill', () => {
     await expect(
       installSkill({ id: 'x/y/z', agents: ['claude-code'], scope: 'global' }),
     ).rejects.toThrow(/no such repo/);
+  });
+
+  it('falls back to stdout when stderr is empty', async () => {
+    runMock.mockResolvedValue({ exitCode: 1, stdout: 'plugin not found', stderr: '' });
+    await expect(
+      installSkill({ id: 'x/y/z', agents: ['claude-code'], scope: 'global' }),
+    ).rejects.toThrow(/plugin not found/);
+  });
+
+  it('includes the failing command in the error', async () => {
+    runMock.mockResolvedValue({ exitCode: 1, stdout: '', stderr: '' });
+    await expect(
+      installSkill({ id: 'x/y/z', agents: ['claude-code'], scope: 'global' }),
+    ).rejects.toThrow(/skills add x\/y --skill z -a claude-code -g -y/);
   });
 });

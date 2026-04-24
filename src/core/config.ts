@@ -9,6 +9,7 @@ export interface Config {
   confirmRemove: boolean;
   autoUpdate: boolean;
   currentAgent: AgentId;
+  showPluginSkills: boolean;
 }
 
 export const defaultConfig: Config = {
@@ -17,6 +18,7 @@ export const defaultConfig: Config = {
   confirmRemove: true,
   autoUpdate: false,
   currentAgent: 'claude-code',
+  showPluginSkills: true,
 };
 
 export const DEFAULT_CONFIG_DIR = join(

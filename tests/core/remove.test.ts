@@ -6,8 +6,9 @@ import { join } from 'path';
 const runMock = vi.fn();
 vi.mock('../../src/core/skills-cli.js', () => ({ runSkillsCli: (...a: unknown[]) => runMock(...a) }));
 
-import { buildRemoveArgs, removeCanonicalSkill, disablePlugin } from '../../src/core/remove.js';
+import { buildRemoveArgs, removeCanonicalSkill, disablePlugin, disableCodexPlugin, disableGeminiExtension } from '../../src/core/remove.js';
 import { setPluginEnabled } from '../../src/core/claude-settings.js';
+import { parse as parseToml } from 'smol-toml';
 
 describe('buildRemoveArgs', () => {
   it('builds args with -g for global', () => {
@@ -19,6 +20,12 @@ describe('buildRemoveArgs', () => {
   it('omits -g for project', () => {
     expect(buildRemoveArgs({ name: 'pdf', agent: 'claude-code', scope: 'project' })).toEqual([
       'remove', 'pdf', '-a', 'claude-code', '-y',
+    ]);
+  });
+
+  it('omits -a when allAgents is true', () => {
+    expect(buildRemoveArgs({ name: 'pdf', agent: 'claude-code', scope: 'global', allAgents: true })).toEqual([
+      'remove', 'pdf', '-g', '-y',
     ]);
   });
 });
@@ -38,6 +45,83 @@ describe('removeCanonicalSkill', () => {
     await expect(
       removeCanonicalSkill({ name: 'pdf', agent: 'claude-code', scope: 'global' }),
     ).rejects.toThrow(/nope/);
+  });
+
+  it('falls back to stdout when stderr is empty', async () => {
+    runMock.mockResolvedValue({ exitCode: 1, stdout: 'no such skill', stderr: '' });
+    await expect(
+      removeCanonicalSkill({ name: 'pdf', agent: 'claude-code', scope: 'global' }),
+    ).rejects.toThrow(/no such skill/);
+  });
+
+  it('includes the failing command in the error', async () => {
+    runMock.mockResolvedValue({ exitCode: 1, stdout: '', stderr: '' });
+    await expect(
+      removeCanonicalSkill({ name: 'pdf', agent: 'claude-code', scope: 'global' }),
+    ).rejects.toThrow(/skills remove pdf -a claude-code -g -y/);
+  });
+});
+
+describe('disableCodexPlugin', () => {
+  let home: string;
+  beforeEach(() => { home = mkdtempSync(join(tmpdir(), 'sm-codex-rm-')); });
+  afterEach(() => rmSync(home, { recursive: true, force: true }));
+
+  it('sets enabled = false and preserves other sections', () => {
+    mkdirSync(join(home, '.codex'), { recursive: true });
+    writeFileSync(
+      join(home, '.codex', 'config.toml'),
+      'model = "gpt-5"\n[plugins."sp@oc"]\nenabled = true\n[plugins."ot@oc"]\nenabled = true\n',
+    );
+    disableCodexPlugin('sp@oc', { home });
+    const cfg = parseToml(readFileSync(join(home, '.codex', 'config.toml'), 'utf8')) as {
+      model?: string;
+      plugins?: Record<string, { enabled?: boolean }>;
+    };
+    expect(cfg.model).toBe('gpt-5');
+    expect(cfg.plugins?.['sp@oc']?.enabled).toBe(false);
+    expect(cfg.plugins?.['ot@oc']?.enabled).toBe(true);
+  });
+
+  it('creates the section when missing', () => {
+    mkdirSync(join(home, '.codex'), { recursive: true });
+    writeFileSync(join(home, '.codex', 'config.toml'), '');
+    disableCodexPlugin('sp@oc', { home });
+    const cfg = parseToml(readFileSync(join(home, '.codex', 'config.toml'), 'utf8')) as {
+      plugins?: Record<string, { enabled?: boolean }>;
+    };
+    expect(cfg.plugins?.['sp@oc']?.enabled).toBe(false);
+  });
+});
+
+describe('disableGeminiExtension', () => {
+  let home: string;
+  beforeEach(() => { home = mkdtempSync(join(tmpdir(), 'sm-gem-rm-')); });
+  afterEach(() => rmSync(home, { recursive: true, force: true }));
+
+  it('writes negated overrides for cwd and leaves other extensions untouched', () => {
+    mkdirSync(join(home, '.gemini', 'extensions'), { recursive: true });
+    writeFileSync(
+      join(home, '.gemini', 'extensions', 'extension-enablement.json'),
+      JSON.stringify({
+        sp: { overrides: ['/Users/x/*'] },
+        cv: { overrides: ['/Users/x/*'] },
+      }),
+    );
+    disableGeminiExtension('sp', { home, cwd: '/Users/me' });
+    const data = JSON.parse(
+      readFileSync(join(home, '.gemini', 'extensions', 'extension-enablement.json'), 'utf8'),
+    );
+    expect(data.sp.overrides).toEqual(['!/Users/me/*', '!/Users/me']);
+    expect(data.cv.overrides).toEqual(['/Users/x/*']);
+  });
+
+  it('creates the file when missing', () => {
+    disableGeminiExtension('sp', { home, cwd: '/Users/me' });
+    const data = JSON.parse(
+      readFileSync(join(home, '.gemini', 'extensions', 'extension-enablement.json'), 'utf8'),
+    );
+    expect(data.sp.overrides).toEqual(['!/Users/me/*', '!/Users/me']);
   });
 });
 

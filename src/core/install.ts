@@ -5,10 +5,22 @@ export interface InstallOpts {
   id: string;
   agents: AgentId[];
   scope: 'global' | 'project';
+  source?: string;
+  skillId?: string;
 }
 
 export function buildAddArgs(opts: InstallOpts): string[] {
-  const args = ['add', opts.id];
+  const args = ['add'];
+  if (opts.source && opts.skillId) {
+    args.push(opts.source, '--skill', opts.skillId);
+  } else {
+    const parts = opts.id.split('/');
+    if (parts.length >= 3) {
+      args.push(parts.slice(0, 2).join('/'), '--skill', parts.slice(2).join('/'));
+    } else {
+      args.push(opts.id);
+    }
+  }
   for (const a of opts.agents) args.push('-a', a);
   if (opts.scope === 'global') args.push('-g');
   args.push('-y');
@@ -16,8 +28,13 @@ export function buildAddArgs(opts: InstallOpts): string[] {
 }
 
 export async function installSkill(opts: InstallOpts, signal?: AbortSignal): Promise<void> {
-  const result = await runSkillsCli(buildAddArgs(opts), { signal });
+  const args = buildAddArgs(opts);
+  const result = await runSkillsCli(args, { signal });
   if (result.exitCode !== 0) {
-    throw new Error(result.stderr.split('\n')[0] || `skills add failed (${result.exitCode})`);
+    const detail =
+      result.stderr.trim().split('\n').pop() ||
+      result.stdout.trim().split('\n').pop() ||
+      `exit ${result.exitCode}`;
+    throw new Error(`skills ${args.join(' ')} → ${detail}`);
   }
 }

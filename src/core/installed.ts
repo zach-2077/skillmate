@@ -5,6 +5,8 @@ import { parse as parseYaml } from 'yaml';
 import { runSkillsCli } from './skills-cli.js';
 import { displayNameToId, universalAgentIds, type AgentId } from './agents.js';
 import { listPluginSkills } from './claude-plugins.js';
+import { listCodexPluginSkills } from './codex-plugins.js';
+import { listGeminiExtensionSkills } from './gemini-extensions.js';
 
 export interface RawListEntry {
   name: string;
@@ -13,7 +15,13 @@ export interface RawListEntry {
   agents: string[];
 }
 
-export type SkillScope = 'project' | 'global' | 'plugin-user' | 'plugin-project';
+export type SkillScope =
+  | 'project'
+  | 'global'
+  | 'plugin-user'
+  | 'plugin-project'
+  | 'plugin-codex'
+  | 'extension-gemini';
 
 export interface InstalledSkill {
   name: string;
@@ -72,8 +80,10 @@ async function listScope(global: boolean): Promise<RawListEntry[]> {
 const SCOPE_ORDER: Record<SkillScope, number> = {
   project: 0,
   global: 1,
-  'plugin-user': 2,
-  'plugin-project': 3,
+  'plugin-project': 2,
+  'plugin-user': 3,
+  'plugin-codex': 4,
+  'extension-gemini': 5,
 };
 
 /**
@@ -93,7 +103,12 @@ export function isUniversalPath(skillPath: string, home: string = homedir()): bo
   return skillPath.includes(needle);
 }
 
-export async function refreshInstalled(): Promise<InstalledSkill[]> {
+export interface RefreshOpts {
+  showPluginSkills?: boolean;
+}
+
+export async function refreshInstalled(opts: RefreshOpts = {}): Promise<InstalledSkill[]> {
+  const showPlugins = opts.showPluginSkills !== false;
   const [project, global] = await Promise.all([listScope(false), listScope(true)]);
   const merged = mergeInstalledLists(project, global);
   const canonical: InstalledSkill[] = merged.map((entry) => {
@@ -112,8 +127,12 @@ export async function refreshInstalled(): Promise<InstalledSkill[]> {
       path: entry.path,
     };
   });
-  const plugins = listPluginSkills();
-  return [...canonical, ...plugins].sort((a, b) => {
+
+  const all = showPlugins
+    ? [...canonical, ...listPluginSkills(), ...listCodexPluginSkills(), ...listGeminiExtensionSkills()]
+    : canonical;
+
+  return all.sort((a, b) => {
     const d = SCOPE_ORDER[a.scope] - SCOPE_ORDER[b.scope];
     return d !== 0 ? d : a.name.localeCompare(b.name);
   });

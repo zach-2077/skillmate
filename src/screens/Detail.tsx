@@ -4,6 +4,8 @@ import { marked } from 'marked';
 import { markedTerminal } from 'marked-terminal';
 import { useStore } from '../store.js';
 import { fetchSkillMd, DEFAULT_CACHE_DIR } from '../core/registry.js';
+import { installSkill } from '../core/install.js';
+import { refreshInstalled } from '../core/installed.js';
 import { TabBar } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
 import { ToastList } from '../components/Toast.js';
@@ -12,6 +14,7 @@ marked.use(markedTerminal() as Parameters<typeof marked.use>[0]);
 
 const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
   ['↑↓', 'scroll'],
+  ['i', 'install'],
   ['esc', 'back'],
   ['q', 'quit'],
 ];
@@ -57,6 +60,39 @@ export function Detail(): React.ReactElement {
     }
     if (key.upArrow) return setScrollOffset((o) => Math.max(0, o - 1));
     if (key.downArrow) return setScrollOffset((o) => o + 1);
+    if (input === 'i' && state.detail) {
+      const opId = state.detail.id;
+      const opts = {
+        id: opId,
+        source: state.detail.source,
+        skillId: state.detail.skillId,
+        agents: [state.currentAgent],
+        scope: state.config?.defaultScope ?? 'global',
+      };
+      dispatch({ type: 'op/start', payload: { id: opId, kind: 'install' as const } });
+      void (async () => {
+        try {
+          await installSkill(opts);
+          dispatch({ type: 'op/done', payload: { id: opId } });
+          dispatch({
+            type: 'toast/push',
+            payload: { id: `t-${Date.now()}`, kind: 'success', text: `installed ${opId}` },
+          });
+          const fresh = await refreshInstalled({
+            showPluginSkills: state.config?.showPluginSkills ?? true,
+          });
+          dispatch({ type: 'installed/loaded', payload: fresh });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          dispatch({ type: 'op/error', payload: { id: opId, message: msg } });
+          dispatch({
+            type: 'toast/push',
+            payload: { id: `t-${Date.now()}`, kind: 'error', text: msg },
+          });
+        }
+      })();
+      return;
+    }
     if (input === 'q') process.exit(0);
   });
 
@@ -97,6 +133,17 @@ export function Detail(): React.ReactElement {
         )}
         {!loading && rendered && <Text>{visibleLines.join('\n')}</Text>}
       </Box>
+      {(() => {
+        const running = Object.entries(state.ops).find(
+          ([, op]) => op.kind === 'install' && op.state === 'running',
+        );
+        if (!running) return null;
+        return (
+          <Box paddingX={1} marginX={1}>
+            <Text color="cyan">⟳ installing {running[0]}…</Text>
+          </Box>
+        );
+      })()}
       <ToastList toasts={state.toasts} />
       <Footer keys={FOOTER_KEYS} />
     </Box>

@@ -6,13 +6,18 @@ import { Box, Text, useInput } from 'ink';
 import { useStore } from '../store.js';
 import { knownAgentIds, agents } from '../core/agents.js';
 import type { InstalledSkill, SkillScope } from '../core/installed.js';
-import { refreshInstalled } from '../core/installed.js';
+import { refreshInstalled, isUniversalPath } from '../core/installed.js';
 import { TabBar, type TabKey } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
 import { ToastList } from '../components/Toast.js';
 import { SearchBar } from '../components/SearchBar.js';
 import type { Screen } from '../store.js';
-import { removeCanonicalSkill, disablePlugin } from '../core/remove.js';
+import {
+  removeCanonicalSkill,
+  disablePlugin,
+  disableCodexPlugin,
+  disableGeminiExtension,
+} from '../core/remove.js';
 import { updateSkill } from '../core/update.js';
 
 const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
@@ -24,6 +29,21 @@ const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
   ['u', 'update'],
   ['q', 'quit'],
 ];
+
+function codexPluginKeyFromSkillName(name: string): string | null {
+  const colon = name.indexOf(':');
+  if (colon === -1) return null;
+  const short = name.slice(0, colon);
+  try {
+    const path = join(homedir(), '.codex', 'config.toml');
+    const text = readFileSync(path, 'utf8');
+    const re = new RegExp(`\\[plugins\\."(${short.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}@[^"]+)"\\]`);
+    const m = re.exec(text);
+    return m?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
 
 function pluginKeyFromSkillName(name: string, _installed: InstalledSkill[]): string | null {
   const colon = name.indexOf(':');
@@ -65,6 +85,10 @@ function scopeLabel(scope: SkillScope): string {
       return 'Plugin-user';
     case 'plugin-project':
       return 'Plugin-project';
+    case 'plugin-codex':
+      return 'Codex plugin';
+    case 'extension-gemini':
+      return 'Gemini ext';
   }
 }
 
@@ -112,18 +136,29 @@ export function Installed(): React.ReactElement {
             name: skill.name,
             agent: state.currentAgent,
             scope: skill.scope,
+            allAgents: isUniversalPath(skill.path),
           });
-        } else {
+        } else if (skill.scope === 'plugin-user' || skill.scope === 'plugin-project') {
           const pluginKey = pluginKeyFromSkillName(skill.name, state.installed);
           if (!pluginKey) throw new Error(`could not resolve plugin key for ${skill.name}`);
           await disablePlugin(pluginKey, skill.scope);
+        } else if (skill.scope === 'plugin-codex') {
+          const key = codexPluginKeyFromSkillName(skill.name);
+          if (!key) throw new Error(`could not resolve codex plugin key for ${skill.name}`);
+          disableCodexPlugin(key);
+        } else if (skill.scope === 'extension-gemini') {
+          const colon = skill.name.indexOf(':');
+          if (colon === -1) throw new Error(`could not resolve gemini extension for ${skill.name}`);
+          disableGeminiExtension(skill.name.slice(0, colon));
         }
         dispatch({ type: 'op/done', payload: { id: opId } });
         dispatch({
           type: 'toast/push',
           payload: { id: `t-${Date.now()}`, kind: 'success', text: `removed ${skill.name}` },
         });
-        const fresh = await refreshInstalled();
+        const fresh = await refreshInstalled({
+          showPluginSkills: state.config?.showPluginSkills ?? true,
+        });
         dispatch({ type: 'installed/loaded', payload: fresh });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -158,7 +193,9 @@ export function Installed(): React.ReactElement {
           type: 'toast/push',
           payload: { id: `t-${Date.now()}`, kind: 'success', text: `updated ${skill.name}` },
         });
-        const fresh = await refreshInstalled();
+        const fresh = await refreshInstalled({
+          showPluginSkills: state.config?.showPluginSkills ?? true,
+        });
         dispatch({ type: 'installed/loaded', payload: fresh });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -277,16 +314,24 @@ export function Installed(): React.ReactElement {
           </Box>
         )}
       </Box>
-      {removePrompt && (
-        <Box flexDirection="column" borderStyle="round" paddingX={1} marginX={1}>
-          <Text bold>
-            Remove {removePrompt.skill.name}
-            {removePrompt.skill.scope.startsWith('plugin') ? ' (disables the whole plugin)' : ''}?
-          </Text>
-          <Text dimColor>scope: {removePrompt.skill.scope}</Text>
-          <Text dimColor>[enter/y] confirm   [esc] cancel</Text>
-        </Box>
-      )}
+      {removePrompt && (() => {
+        const warning =
+          removePrompt.skill.scope === 'extension-gemini'
+            ? 'disables the whole extension in this directory'
+            : removePrompt.skill.scope.startsWith('plugin')
+              ? 'disables the whole plugin'
+              : null;
+        return (
+          <Box flexDirection="column" borderStyle="round" paddingX={1} marginX={1}>
+            <Text bold>Remove {removePrompt.skill.name}?</Text>
+            {warning && (
+              <Text bold color="yellow">{`⚠  ${warning.toUpperCase()}`}</Text>
+            )}
+            <Text dimColor>scope: {removePrompt.skill.scope}</Text>
+            <Text dimColor>[enter/y] confirm   [esc] cancel</Text>
+          </Box>
+        );
+      })()}
       <ToastList toasts={state.toasts} />
       <Footer keys={filtering ? FOOTER_KEYS_FILTERING : FOOTER_KEYS} />
     </Box>
