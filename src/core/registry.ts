@@ -2,7 +2,7 @@ import type { SearchResult as StoreSearchResult } from '../store.js';
 import { readFileSync as readSyncFs, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
-import { createRequire } from 'module';
+import popularFallback from '../data/popular-fallback.json';
 
 export const DEFAULT_CACHE_DIR = join(homedir(), '.cache', 'skillmate');
 
@@ -25,8 +25,7 @@ export async function searchSkills(query: string, signal?: AbortSignal): Promise
   return body.skills;
 }
 
-const _require = createRequire(import.meta.url);
-export const FALLBACK_POPULAR: SearchResult[] = _require('../data/popular-fallback.json') as SearchResult[];
+export const FALLBACK_POPULAR: SearchResult[] = popularFallback as SearchResult[];
 
 const POPULAR_TTL_MS = 6 * 60 * 60 * 1000;
 const HREF_RE = /href="\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)"/g;
