@@ -79,7 +79,7 @@ describe('disableGeminiExtension', () => {
   beforeEach(() => { home = mkdtempSync(join(tmpdir(), 'sm-gem-rm-')); });
   afterEach(() => rmSync(home, { recursive: true, force: true }));
 
-  it('sets overrides to [] and leaves other extensions untouched', () => {
+  it('writes negated overrides for cwd and leaves other extensions untouched', () => {
     mkdirSync(join(home, '.gemini', 'extensions'), { recursive: true });
     writeFileSync(
       join(home, '.gemini', 'extensions', 'extension-enablement.json'),
@@ -88,20 +88,20 @@ describe('disableGeminiExtension', () => {
         cv: { overrides: ['/Users/x/*'] },
       }),
     );
-    disableGeminiExtension('sp', { home });
+    disableGeminiExtension('sp', { home, cwd: '/Users/me' });
     const data = JSON.parse(
       readFileSync(join(home, '.gemini', 'extensions', 'extension-enablement.json'), 'utf8'),
     );
-    expect(data.sp.overrides).toEqual([]);
+    expect(data.sp.overrides).toEqual(['!/Users/me/*', '!/Users/me']);
     expect(data.cv.overrides).toEqual(['/Users/x/*']);
   });
 
   it('creates the file when missing', () => {
-    disableGeminiExtension('sp', { home });
+    disableGeminiExtension('sp', { home, cwd: '/Users/me' });
     const data = JSON.parse(
       readFileSync(join(home, '.gemini', 'extensions', 'extension-enablement.json'), 'utf8'),
     );
-    expect(data.sp.overrides).toEqual([]);
+    expect(data.sp.overrides).toEqual(['!/Users/me/*', '!/Users/me']);
   });
 });
 

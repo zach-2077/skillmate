@@ -62,8 +62,13 @@ export function disableCodexPlugin(key: string, opts: DisableOpts = {}): void {
   writeFileSync(path, stringifyToml(cfg));
 }
 
-export function disableGeminiExtension(name: string, opts: DisableOpts = {}): void {
+export interface GeminiDisableOpts extends DisableOpts {
+  cwd?: string;
+}
+
+export function disableGeminiExtension(name: string, opts: GeminiDisableOpts = {}): void {
   const home = opts.home ?? homedir();
+  const cwd = opts.cwd ?? process.cwd();
   const dir = join(home, '.gemini', 'extensions');
   const path = join(dir, 'extension-enablement.json');
   let data: Record<string, { overrides?: string[] }> = {};
@@ -74,7 +79,7 @@ export function disableGeminiExtension(name: string, opts: DisableOpts = {}): vo
       data = {};
     }
   }
-  data[name] = { overrides: [] };
+  data[name] = { overrides: [`!${cwd}/*`, `!${cwd}`] };
   mkdirSync(dir, { recursive: true });
   writeFileSync(path, JSON.stringify(data, null, 2));
 }

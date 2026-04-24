@@ -49,8 +49,12 @@ function readEnablement(home: string): EnablementFile {
 function isEnabledForCwd(entry: EnablementEntry | undefined, cwd: string): boolean {
   if (!entry) return true;
   const overrides = entry.overrides ?? [];
-  if (overrides.length === 0) return false;
-  return overrides.some((g) => matchesGlob(g, cwd));
+  if (overrides.length === 0) return true;
+  const positives = overrides.filter((g) => !g.startsWith('!'));
+  const negatives = overrides.filter((g) => g.startsWith('!')).map((g) => g.slice(1));
+  if (negatives.some((g) => matchesGlob(g, cwd))) return false;
+  if (positives.length === 0) return true;
+  return positives.some((g) => matchesGlob(g, cwd));
 }
 
 function readManifest(extDir: string): ExtensionManifest {

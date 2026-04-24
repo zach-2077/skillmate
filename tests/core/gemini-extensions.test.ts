@@ -91,10 +91,31 @@ describe('listGeminiExtensionSkills', () => {
     expect(listGeminiExtensionSkills({ home, cwd })).toEqual([]);
   });
 
-  it('skips extensions with empty overrides', () => {
+  it('treats empty overrides as enabled everywhere', () => {
     const ext = writeExtension(home, 'sp', { name: 'sp' });
     writeExtSkill(ext, 'tdd', 'tdd desc');
     writeEnablement(home, { sp: { overrides: [] } });
+    expect(listGeminiExtensionSkills({ home, cwd })).toHaveLength(1);
+  });
+
+  it('honors a negated override that matches cwd as disabled', () => {
+    const ext = writeExtension(home, 'sp', { name: 'sp' });
+    writeExtSkill(ext, 'tdd', 'tdd desc');
+    writeEnablement(home, { sp: { overrides: ['!/Users/me/*'] } });
+    expect(listGeminiExtensionSkills({ home, cwd })).toEqual([]);
+  });
+
+  it('treats a non-matching negated override as enabled', () => {
+    const ext = writeExtension(home, 'sp', { name: 'sp' });
+    writeExtSkill(ext, 'tdd', 'tdd desc');
+    writeEnablement(home, { sp: { overrides: ['!/Users/other/*'] } });
+    expect(listGeminiExtensionSkills({ home, cwd })).toHaveLength(1);
+  });
+
+  it('negative overrides win over positive ones', () => {
+    const ext = writeExtension(home, 'sp', { name: 'sp' });
+    writeExtSkill(ext, 'tdd', 'tdd desc');
+    writeEnablement(home, { sp: { overrides: ['/Users/me/*', '!/Users/me/*'] } });
     expect(listGeminiExtensionSkills({ home, cwd })).toEqual([]);
   });
 
