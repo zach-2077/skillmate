@@ -35,4 +35,18 @@ describe('installSkill', () => {
       installSkill({ id: 'x/y/z', agents: ['claude-code'], scope: 'global' }),
     ).rejects.toThrow(/no such repo/);
   });
+
+  it('falls back to stdout when stderr is empty', async () => {
+    runMock.mockResolvedValue({ exitCode: 1, stdout: 'plugin not found', stderr: '' });
+    await expect(
+      installSkill({ id: 'x/y/z', agents: ['claude-code'], scope: 'global' }),
+    ).rejects.toThrow(/plugin not found/);
+  });
+
+  it('includes the failing command in the error', async () => {
+    runMock.mockResolvedValue({ exitCode: 1, stdout: '', stderr: '' });
+    await expect(
+      installSkill({ id: 'x/y/z', agents: ['claude-code'], scope: 'global' }),
+    ).rejects.toThrow(/skills add x\/y\/z -a claude-code -g -y/);
+  });
 });

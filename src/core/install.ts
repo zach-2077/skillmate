@@ -16,8 +16,13 @@ export function buildAddArgs(opts: InstallOpts): string[] {
 }
 
 export async function installSkill(opts: InstallOpts, signal?: AbortSignal): Promise<void> {
-  const result = await runSkillsCli(buildAddArgs(opts), { signal });
+  const args = buildAddArgs(opts);
+  const result = await runSkillsCli(args, { signal });
   if (result.exitCode !== 0) {
-    throw new Error(result.stderr.split('\n')[0] || `skills add failed (${result.exitCode})`);
+    const detail =
+      result.stderr.trim().split('\n').pop() ||
+      result.stdout.trim().split('\n').pop() ||
+      `exit ${result.exitCode}`;
+    throw new Error(`skills ${args.join(' ')} → ${detail}`);
   }
 }
