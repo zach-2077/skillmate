@@ -313,20 +313,24 @@ export function Installed(): React.ReactElement {
           </Box>
         )}
       </Box>
-      {removePrompt && (
-        <Box flexDirection="column" borderStyle="round" paddingX={1} marginX={1}>
-          <Text bold>
-            Remove {removePrompt.skill.name}
-            {removePrompt.skill.scope === 'extension-gemini'
-              ? ' (disables the whole extension in this directory)'
-              : removePrompt.skill.scope.startsWith('plugin')
-                ? ' (disables the whole plugin)'
-                : ''}?
-          </Text>
-          <Text dimColor>scope: {removePrompt.skill.scope}</Text>
-          <Text dimColor>[enter/y] confirm   [esc] cancel</Text>
-        </Box>
-      )}
+      {removePrompt && (() => {
+        const warning =
+          removePrompt.skill.scope === 'extension-gemini'
+            ? 'disables the whole extension in this directory'
+            : removePrompt.skill.scope.startsWith('plugin')
+              ? 'disables the whole plugin'
+              : null;
+        return (
+          <Box flexDirection="column" borderStyle="round" paddingX={1} marginX={1}>
+            <Text bold>Remove {removePrompt.skill.name}?</Text>
+            {warning && (
+              <Text bold color="yellow">{`⚠  ${warning.toUpperCase()}`}</Text>
+            )}
+            <Text dimColor>scope: {removePrompt.skill.scope}</Text>
+            <Text dimColor>[enter/y] confirm   [esc] cancel</Text>
+          </Box>
+        );
+      })()}
       <ToastList toasts={state.toasts} />
       <Footer keys={filtering ? FOOTER_KEYS_FILTERING : FOOTER_KEYS} />
     </Box>
