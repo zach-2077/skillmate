@@ -20,6 +20,7 @@ describe('config', () => {
       confirmRemove: true,
       autoUpdate: false,
       currentAgent: 'claude-code',
+      showPluginSkills: true,
     };
     saveConfig(cfg, { dir });
     expect(loadConfig({ dir })).toEqual(cfg);
@@ -43,5 +44,15 @@ describe('config', () => {
   it('creates the directory on save', () => {
     saveConfig(defaultConfig, { dir });
     expect(existsSync(join(dir, 'config.json'))).toBe(true);
+  });
+
+  it('defaults showPluginSkills to true', () => {
+    expect(defaultConfig.showPluginSkills).toBe(true);
+  });
+
+  it('overlays showPluginSkills from disk', () => {
+    saveConfig({ ...defaultConfig, showPluginSkills: false }, { dir });
+    const loaded = loadConfig({ dir });
+    expect(loaded?.showPluginSkills).toBe(false);
   });
 });
