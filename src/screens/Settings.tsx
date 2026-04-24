@@ -4,6 +4,7 @@ import { useStore } from '../store.js';
 import { agents, knownAgentIds, type AgentId } from '../core/agents.js';
 import { detectAgents } from '../core/detect-agents.js';
 import { saveConfig, defaultConfig, type Config } from '../core/config.js';
+import { refreshInstalled } from '../core/installed.js';
 import { TabBar } from '../components/TabBar.js';
 import { Footer } from '../components/Footer.js';
 import { ToastList } from '../components/Toast.js';
@@ -87,9 +88,16 @@ export function Settings(): React.ReactElement {
     if (key.downArrow) return setCursor((c) => nextSelectable(rows, c, 1));
     if (key.escape) return dispatch({ type: 'screen/show', payload: 'installed' });
     if (key.return) {
+      const prev = state.config;
       saveConfig(draft);
       dispatch({ type: 'config/load', payload: draft });
       dispatch({ type: 'screen/show', payload: 'installed' });
+      if (prev?.showPluginSkills !== draft.showPluginSkills) {
+        dispatch({ type: 'installed/loading' });
+        void refreshInstalled({ showPluginSkills: draft.showPluginSkills })
+          .then((skills) => dispatch({ type: 'installed/loaded', payload: skills }))
+          .catch((err: Error) => dispatch({ type: 'installed/error', payload: err.message }));
+      }
       return;
     }
     if (input === ' ') {
