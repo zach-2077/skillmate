@@ -6,6 +6,8 @@ import { join } from 'path';
 const runMock = vi.fn();
 vi.mock('../../src/core/skills-cli.js', () => ({ runSkillsCli: (...a: unknown[]) => runMock(...a) }));
 vi.mock('../../src/core/claude-plugins.js', () => ({ listPluginSkills: () => [] }));
+vi.mock('../../src/core/codex-plugins.js', () => ({ listCodexPluginSkills: () => [] }));
+vi.mock('../../src/core/gemini-extensions.js', () => ({ listGeminiExtensionSkills: () => [] }));
 
 import {
   parseFrontmatterDescription,
@@ -154,5 +156,56 @@ describe('refreshInstalled', () => {
     expect(skills.map((s) => s.name)).toEqual(['canon', 'plug:alpha']);
 
     spy.mockRestore();
+  });
+
+  it('includes codex and gemini scanner output and sorts after claude plugins', async () => {
+    runMock
+      .mockResolvedValueOnce({ exitCode: 0, stdout: '[]', stderr: '' })
+      .mockResolvedValueOnce({ exitCode: 0, stdout: '[]', stderr: '' });
+
+    const claude = await import('../../src/core/claude-plugins.js');
+    const codex = await import('../../src/core/codex-plugins.js');
+    const gemini = await import('../../src/core/gemini-extensions.js');
+
+    const claudeSpy = vi.spyOn(claude, 'listPluginSkills').mockReturnValue([
+      { name: 'cl:a', description: '', scope: 'plugin-user', agents: ['claude-code'], path: '/p/cl' },
+    ]);
+    const codexSpy = vi.spyOn(codex, 'listCodexPluginSkills').mockReturnValue([
+      { name: 'co:a', description: '', scope: 'plugin-codex', agents: ['codex'], path: '/p/co' },
+    ]);
+    const geminiSpy = vi.spyOn(gemini, 'listGeminiExtensionSkills').mockReturnValue([
+      { name: 'ge:a', description: '', scope: 'extension-gemini', agents: ['gemini-cli'], path: '/p/ge' },
+    ]);
+
+    const skills = await refreshInstalled();
+    expect(skills.map((s) => s.scope)).toEqual(['plugin-user', 'plugin-codex', 'extension-gemini']);
+
+    claudeSpy.mockRestore();
+    codexSpy.mockRestore();
+    geminiSpy.mockRestore();
+  });
+
+  it('skips all plugin scanners when showPluginSkills is false', async () => {
+    runMock
+      .mockResolvedValueOnce({ exitCode: 0, stdout: '[]', stderr: '' })
+      .mockResolvedValueOnce({ exitCode: 0, stdout: '[]', stderr: '' });
+
+    const claude = await import('../../src/core/claude-plugins.js');
+    const codex = await import('../../src/core/codex-plugins.js');
+    const gemini = await import('../../src/core/gemini-extensions.js');
+
+    const claudeSpy = vi.spyOn(claude, 'listPluginSkills');
+    const codexSpy = vi.spyOn(codex, 'listCodexPluginSkills');
+    const geminiSpy = vi.spyOn(gemini, 'listGeminiExtensionSkills');
+
+    const skills = await refreshInstalled({ showPluginSkills: false });
+    expect(skills).toEqual([]);
+    expect(claudeSpy).not.toHaveBeenCalled();
+    expect(codexSpy).not.toHaveBeenCalled();
+    expect(geminiSpy).not.toHaveBeenCalled();
+
+    claudeSpy.mockRestore();
+    codexSpy.mockRestore();
+    geminiSpy.mockRestore();
   });
 });

@@ -127,7 +127,7 @@ export function listGeminiExtensionSkills(opts: GeminiScanOpts = {}): InstalledS
       results.push({
         name: `${extShort}:${fm.name}`,
         description: fm.description ?? '',
-        scope: 'extension-gemini' as InstalledSkill['scope'],
+        scope: 'extension-gemini',
         agents: ['gemini-cli'],
         path: skillDir,
       });
