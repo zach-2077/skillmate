@@ -117,4 +117,12 @@ describe('listGeminiExtensionSkills', () => {
     const skills = listGeminiExtensionSkills({ home, cwd });
     expect(skills).toHaveLength(1);
   });
+
+  it('treats malformed enablement.json as empty (extensions enabled by default)', () => {
+    mkdirSync(join(home, '.gemini', 'extensions'), { recursive: true });
+    writeFileSync(join(home, '.gemini', 'extensions', 'extension-enablement.json'), '{not json');
+    const ext = writeExtension(home, 'sp', { name: 'sp' });
+    writeExtSkill(ext, 'foo', 'd');
+    expect(listGeminiExtensionSkills({ home, cwd })).toHaveLength(1);
+  });
 });
