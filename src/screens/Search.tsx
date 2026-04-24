@@ -111,6 +111,7 @@ export function Search(): React.ReactElement {
               showPluginSkills: state.config?.showPluginSkills ?? true,
             });
             dispatch({ type: 'installed/loaded', payload: fresh });
+            dispatch({ type: 'screen/show', payload: 'installed' });
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             dispatch({ type: 'op/error', payload: { id: opId, message: msg } });
@@ -240,6 +241,17 @@ export function Search(): React.ReactElement {
           <Text dimColor>[enter] confirm   [esc] cancel</Text>
         </Box>
       )}
+      {(() => {
+        const running = Object.entries(state.ops).find(
+          ([, op]) => op.kind === 'install' && op.state === 'running',
+        );
+        if (!running) return null;
+        return (
+          <Box paddingX={1} marginX={1}>
+            <Text color="cyan">⟳ installing {running[0]}…</Text>
+          </Box>
+        );
+      })()}
       <ToastList toasts={state.toasts} />
       <Footer
         keys={installPrompt ? FOOTER_KEYS_PROMPT : inputActive ? FOOTER_KEYS_SEARCHING : FOOTER_KEYS}
