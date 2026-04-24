@@ -20,14 +20,14 @@ describe('detectAgents', () => {
 
   it('detects multiple agents', () => {
     mkdirSync(join(home, '.claude'));
-    mkdirSync(join(home, '.cursor'));
+    mkdirSync(join(home, '.codex'));
     const detected = detectAgents({ home });
     expect(detected).toContain('claude-code');
-    expect(detected).toContain('cursor');
+    expect(detected).toContain('codex');
   });
 
-  it('handles nested dirNames like .codeium/windsurf', () => {
-    mkdirSync(join(home, '.codeium', 'windsurf'), { recursive: true });
-    expect(detectAgents({ home })).toContain('windsurf');
+  it('handles nested dirNames like .config/opencode', () => {
+    mkdirSync(join(home, '.config', 'opencode'), { recursive: true });
+    expect(detectAgents({ home })).toContain('opencode');
   });
 });

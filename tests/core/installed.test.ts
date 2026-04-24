@@ -57,7 +57,7 @@ describe('mergeInstalledLists', () => {
       { name: 'x', path: '/p/x/SKILL.md', scope: 'project', agents: ['Claude Code'] },
     ];
     const b: RawListEntry[] = [
-      { name: 'x', path: '/g/x/SKILL.md', scope: 'global', agents: ['Cursor'] },
+      { name: 'x', path: '/g/x/SKILL.md', scope: 'global', agents: ['Codex'] },
     ];
     const merged = mergeInstalledLists(a, b);
     expect(merged).toHaveLength(2);
@@ -123,12 +123,8 @@ describe('refreshInstalled', () => {
     const skill = skills[0]!;
     expect(skill.agents).toContain('claude-code');   // explicit attribution preserved
     expect(skill.agents).toContain('gemini-cli');     // fanned-out
-    expect(skill.agents).toContain('cursor');         // fanned-out
-    expect(skill.agents).toContain('github-copilot'); // fanned-out
-    // Non-universal agents are NOT added.
-    expect(skill.agents).not.toContain('continue');
-    expect(skill.agents).not.toContain('windsurf');
-    expect(skill.agents).not.toContain('roo');
+    expect(skill.agents).toContain('codex');          // fanned-out
+    expect(skill.agents).toContain('opencode');       // fanned-out
   });
 
   it('sorts canonical skills before plugin skills', async () => {

@@ -1,6 +1,6 @@
 # skillmate
 
-A full-screen TUI for managing [agent skills](https://skills.sh) across Claude Code, Cursor, Codex, OpenCode, Gemini CLI, GitHub Copilot, and more.
+A full-screen TUI for managing [agent skills](https://skills.sh) across Claude Code, Codex, OpenCode, and Gemini CLI.
 
 Think of it as a k9s-style front end for the `skills` CLI: browse what's installed, search the directory at skills.sh, read the README inline, and install or remove with a single key.
 

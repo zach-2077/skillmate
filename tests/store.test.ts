@@ -22,8 +22,8 @@ describe('reducer', () => {
   });
 
   it('switches current agent', () => {
-    const next = reducer(initialState, { type: 'agent/select', payload: 'cursor' });
-    expect(next.currentAgent).toBe('cursor');
+    const next = reducer(initialState, { type: 'agent/select', payload: 'codex' });
+    expect(next.currentAgent).toBe('codex');
   });
 
   it('switches screen', () => {
@@ -112,11 +112,11 @@ describe('reducer (Phase 3)', () => {
       defaultScope: 'global',
       confirmRemove: false,
       autoUpdate: true,
-      currentAgent: 'cursor',
+      currentAgent: 'codex',
     };
     const next = reducer(initialState, { type: 'config/load', payload: cfg });
     expect(next.config).toEqual(cfg);
-    expect(next.currentAgent).toBe('cursor');
+    expect(next.currentAgent).toBe('codex');
   });
 
   it('switches screen to settings', () => {

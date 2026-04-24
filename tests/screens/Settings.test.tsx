@@ -12,7 +12,7 @@ vi.mock('../../src/core/config.js', async () => {
 });
 
 vi.mock('../../src/core/detect-agents.js', () => ({
-  detectAgents: vi.fn().mockReturnValue(['claude-code', 'cursor']),
+  detectAgents: vi.fn().mockReturnValue(['claude-code', 'codex']),
 }));
 
 describe('Settings screen', () => {
@@ -23,7 +23,7 @@ describe('Settings screen', () => {
       </StoreProvider>,
     );
     expect(lastFrame()).toContain('Claude Code');
-    expect(lastFrame()).toContain('Cursor');
+    expect(lastFrame()).toContain('Codex');
   });
 
   it('shows scope radios', () => {
@@ -57,12 +57,12 @@ describe('Settings screen', () => {
         <Settings />
       </StoreProvider>,
     );
-    // Detected (mocked to ['claude-code', 'cursor']) — no "(not detected)" tag.
+    // Detected (mocked to ['claude-code', 'codex']) — no "(not detected)" tag.
     expect(lastFrame()).toContain('Claude Code');
-    expect(lastFrame()).toContain('Cursor');
+    expect(lastFrame()).toContain('Codex');
     // An agent NOT in the detected mock should still appear, with the tag.
     expect(lastFrame()).toContain('Gemini CLI');
-    expect(lastFrame()).toContain('GitHub Copilot');
+    expect(lastFrame()).toContain('OpenCode');
     expect(lastFrame()).toMatch(/Gemini CLI.*\(not detected\)/);
   });
 

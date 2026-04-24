@@ -17,16 +17,9 @@ export interface Agent {
 
 export const agents: Record<string, Agent> = {
   'claude-code': { id: 'claude-code', displayName: 'Claude Code', dirName: '.claude', isUniversal: false },
-  cursor: { id: 'cursor', displayName: 'Cursor', dirName: '.cursor', isUniversal: true },
   codex: { id: 'codex', displayName: 'Codex', dirName: '.codex', isUniversal: true },
   opencode: { id: 'opencode', displayName: 'OpenCode', dirName: '.config/opencode', isUniversal: true },
   'gemini-cli': { id: 'gemini-cli', displayName: 'Gemini CLI', dirName: '.gemini', isUniversal: true },
-  'github-copilot': { id: 'github-copilot', displayName: 'GitHub Copilot', dirName: '.copilot', isUniversal: true },
-  cline: { id: 'cline', displayName: 'Cline', dirName: '.cline', isUniversal: true },
-  windsurf: { id: 'windsurf', displayName: 'Windsurf', dirName: '.codeium/windsurf', isUniversal: false },
-  continue: { id: 'continue', displayName: 'Continue', dirName: '.continue', isUniversal: false },
-  warp: { id: 'warp', displayName: 'Warp', dirName: '.warp', isUniversal: true },
-  roo: { id: 'roo', displayName: 'Roo Code', dirName: '.roo', isUniversal: false },
 };
 
 export const universalAgentIds: AgentId[] = Object.values(agents)

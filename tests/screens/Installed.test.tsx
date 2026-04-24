@@ -6,7 +6,7 @@ import { StoreProvider } from '../../src/store.js';
 
 const sample = [
   { name: 'react', description: 'react helper', scope: 'global' as const, agents: ['claude-code'], path: '/p/r' },
-  { name: 'pdf', description: 'pdf helper', scope: 'global' as const, agents: ['cursor'], path: '/p/p' },
+  { name: 'pdf', description: 'pdf helper', scope: 'global' as const, agents: ['codex'], path: '/p/p' },
 ];
 
 function manySkills(n: number) {
@@ -35,7 +35,7 @@ describe('Installed screen', () => {
   });
 
   it('shows empty state when no skills for agent', () => {
-    const { lastFrame } = withStore({ installed: sample, currentAgent: 'codex' });
+    const { lastFrame } = withStore({ installed: sample, currentAgent: 'gemini-cli' });
     expect(lastFrame()).toMatch(/no skills installed/i);
   });
 
@@ -59,7 +59,7 @@ describe('Installed screen', () => {
     await new Promise((r) => setTimeout(r, 10));
     stdin.write('\t');
     await new Promise((r) => setTimeout(r, 10));
-    expect(lastFrame()).toContain('Cursor');
+    expect(lastFrame()).toContain('Codex');
   });
 
   it('filters by substring when [/] is pressed', async () => {
@@ -145,7 +145,7 @@ describe('Installed screen', () => {
     expect(lastFrame()).toContain('Gemini CLI');
     stdin.write('\t');
     await new Promise((r) => setTimeout(r, 10));
-    // Wraps back to claude-code, skipping cursor, codex, etc.
+    // Wraps back to claude-code, skipping codex / opencode.
     expect(lastFrame()).toContain('Claude Code');
   });
 
