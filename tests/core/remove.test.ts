@@ -40,6 +40,20 @@ describe('removeCanonicalSkill', () => {
       removeCanonicalSkill({ name: 'pdf', agent: 'claude-code', scope: 'global' }),
     ).rejects.toThrow(/nope/);
   });
+
+  it('falls back to stdout when stderr is empty', async () => {
+    runMock.mockResolvedValue({ exitCode: 1, stdout: 'no such skill', stderr: '' });
+    await expect(
+      removeCanonicalSkill({ name: 'pdf', agent: 'claude-code', scope: 'global' }),
+    ).rejects.toThrow(/no such skill/);
+  });
+
+  it('includes the failing command in the error', async () => {
+    runMock.mockResolvedValue({ exitCode: 1, stdout: '', stderr: '' });
+    await expect(
+      removeCanonicalSkill({ name: 'pdf', agent: 'claude-code', scope: 'global' }),
+    ).rejects.toThrow(/skills remove pdf -a claude-code -g -y/);
+  });
 });
 
 describe('disableCodexPlugin', () => {

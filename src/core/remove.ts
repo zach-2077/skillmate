@@ -24,9 +24,14 @@ export async function removeCanonicalSkill(
   opts: CanonicalRemoveOpts,
   signal?: AbortSignal,
 ): Promise<void> {
-  const result = await runSkillsCli(buildRemoveArgs(opts), { signal });
+  const args = buildRemoveArgs(opts);
+  const result = await runSkillsCli(args, { signal });
   if (result.exitCode !== 0) {
-    throw new Error(result.stderr.split('\n')[0] || `skills remove failed (${result.exitCode})`);
+    const detail =
+      result.stderr.trim().split('\n').pop() ||
+      result.stdout.trim().split('\n').pop() ||
+      `exit ${result.exitCode}`;
+    throw new Error(`skills ${args.join(' ')} → ${detail}`);
   }
 }
 
