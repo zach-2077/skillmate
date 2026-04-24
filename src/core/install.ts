@@ -5,15 +5,21 @@ export interface InstallOpts {
   id: string;
   agents: AgentId[];
   scope: 'global' | 'project';
+  source?: string;
+  skillId?: string;
 }
 
 export function buildAddArgs(opts: InstallOpts): string[] {
-  const parts = opts.id.split('/');
   const args = ['add'];
-  if (parts.length >= 3) {
-    args.push(parts.slice(0, 2).join('/'), '--skill', parts.slice(2).join('/'));
+  if (opts.source && opts.skillId) {
+    args.push(opts.source, '--skill', opts.skillId);
   } else {
-    args.push(opts.id);
+    const parts = opts.id.split('/');
+    if (parts.length >= 3) {
+      args.push(parts.slice(0, 2).join('/'), '--skill', parts.slice(2).join('/'));
+    } else {
+      args.push(opts.id);
+    }
   }
   for (const a of opts.agents) args.push('-a', a);
   if (opts.scope === 'global') args.push('-g');

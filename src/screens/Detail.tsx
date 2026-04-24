@@ -64,6 +64,8 @@ export function Detail(): React.ReactElement {
       const opId = state.detail.id;
       const opts = {
         id: opId,
+        source: state.detail.source,
+        skillId: state.detail.skillId,
         agents: [state.currentAgent],
         scope: state.config?.defaultScope ?? 'global',
       };

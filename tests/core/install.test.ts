@@ -23,6 +23,18 @@ describe('buildAddArgs', () => {
       'add', 'a/b', '-a', 'claude-code', '-g', '-y',
     ]);
   });
+
+  it('prefers structured source + skillId over splitting the id', () => {
+    expect(
+      buildAddArgs({
+        id: 'smithery.ai/frontend-design',
+        source: 'smithery.ai',
+        skillId: 'frontend-design',
+        agents: ['codex'],
+        scope: 'global',
+      }),
+    ).toEqual(['add', 'smithery.ai', '--skill', 'frontend-design', '-a', 'codex', '-g', '-y']);
+  });
 });
 
 describe('installSkill', () => {

@@ -94,6 +94,8 @@ export function Search(): React.ReactElement {
       if (key.return) {
         const opts: InstallOpts = {
           id: installPrompt.result.id,
+          source: installPrompt.result.source,
+          skillId: installPrompt.result.skillId,
           agents: [...installPrompt.agents],
           scope: installPrompt.scope,
         };
