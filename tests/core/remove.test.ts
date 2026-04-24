@@ -6,8 +6,9 @@ import { join } from 'path';
 const runMock = vi.fn();
 vi.mock('../../src/core/skills-cli.js', () => ({ runSkillsCli: (...a: unknown[]) => runMock(...a) }));
 
-import { buildRemoveArgs, removeCanonicalSkill, disablePlugin } from '../../src/core/remove.js';
+import { buildRemoveArgs, removeCanonicalSkill, disablePlugin, disableCodexPlugin, disableGeminiExtension } from '../../src/core/remove.js';
 import { setPluginEnabled } from '../../src/core/claude-settings.js';
+import { parse as parseToml } from 'smol-toml';
 
 describe('buildRemoveArgs', () => {
   it('builds args with -g for global', () => {
@@ -38,6 +39,69 @@ describe('removeCanonicalSkill', () => {
     await expect(
       removeCanonicalSkill({ name: 'pdf', agent: 'claude-code', scope: 'global' }),
     ).rejects.toThrow(/nope/);
+  });
+});
+
+describe('disableCodexPlugin', () => {
+  let home: string;
+  beforeEach(() => { home = mkdtempSync(join(tmpdir(), 'sm-codex-rm-')); });
+  afterEach(() => rmSync(home, { recursive: true, force: true }));
+
+  it('sets enabled = false and preserves other sections', () => {
+    mkdirSync(join(home, '.codex'), { recursive: true });
+    writeFileSync(
+      join(home, '.codex', 'config.toml'),
+      'model = "gpt-5"\n[plugins."sp@oc"]\nenabled = true\n[plugins."ot@oc"]\nenabled = true\n',
+    );
+    disableCodexPlugin('sp@oc', { home });
+    const cfg = parseToml(readFileSync(join(home, '.codex', 'config.toml'), 'utf8')) as {
+      model?: string;
+      plugins?: Record<string, { enabled?: boolean }>;
+    };
+    expect(cfg.model).toBe('gpt-5');
+    expect(cfg.plugins?.['sp@oc']?.enabled).toBe(false);
+    expect(cfg.plugins?.['ot@oc']?.enabled).toBe(true);
+  });
+
+  it('creates the section when missing', () => {
+    mkdirSync(join(home, '.codex'), { recursive: true });
+    writeFileSync(join(home, '.codex', 'config.toml'), '');
+    disableCodexPlugin('sp@oc', { home });
+    const cfg = parseToml(readFileSync(join(home, '.codex', 'config.toml'), 'utf8')) as {
+      plugins?: Record<string, { enabled?: boolean }>;
+    };
+    expect(cfg.plugins?.['sp@oc']?.enabled).toBe(false);
+  });
+});
+
+describe('disableGeminiExtension', () => {
+  let home: string;
+  beforeEach(() => { home = mkdtempSync(join(tmpdir(), 'sm-gem-rm-')); });
+  afterEach(() => rmSync(home, { recursive: true, force: true }));
+
+  it('sets overrides to [] and leaves other extensions untouched', () => {
+    mkdirSync(join(home, '.gemini', 'extensions'), { recursive: true });
+    writeFileSync(
+      join(home, '.gemini', 'extensions', 'extension-enablement.json'),
+      JSON.stringify({
+        sp: { overrides: ['/Users/x/*'] },
+        cv: { overrides: ['/Users/x/*'] },
+      }),
+    );
+    disableGeminiExtension('sp', { home });
+    const data = JSON.parse(
+      readFileSync(join(home, '.gemini', 'extensions', 'extension-enablement.json'), 'utf8'),
+    );
+    expect(data.sp.overrides).toEqual([]);
+    expect(data.cv.overrides).toEqual(['/Users/x/*']);
+  });
+
+  it('creates the file when missing', () => {
+    disableGeminiExtension('sp', { home });
+    const data = JSON.parse(
+      readFileSync(join(home, '.gemini', 'extensions', 'extension-enablement.json'), 'utf8'),
+    );
+    expect(data.sp.overrides).toEqual([]);
   });
 });
 
