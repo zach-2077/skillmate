@@ -6,15 +6,21 @@ vi.mock('../../src/core/skills-cli.js', () => ({ runSkillsCli: (...a: unknown[])
 import { buildAddArgs, installSkill } from '../../src/core/install.js';
 
 describe('buildAddArgs', () => {
-  it('builds args with multiple agents and global scope', () => {
+  it('splits a 3-segment id into source + --skill', () => {
     expect(buildAddArgs({ id: 'a/b/c', agents: ['claude-code', 'cursor'], scope: 'global' })).toEqual([
-      'add', 'a/b/c', '-a', 'claude-code', '-a', 'cursor', '-g', '-y',
+      'add', 'a/b', '--skill', 'c', '-a', 'claude-code', '-a', 'cursor', '-g', '-y',
     ]);
   });
 
   it('omits -g for project scope', () => {
     expect(buildAddArgs({ id: 'a/b/c', agents: ['claude-code'], scope: 'project' })).toEqual([
-      'add', 'a/b/c', '-a', 'claude-code', '-y',
+      'add', 'a/b', '--skill', 'c', '-a', 'claude-code', '-y',
+    ]);
+  });
+
+  it('passes a 2-segment id through as the source', () => {
+    expect(buildAddArgs({ id: 'a/b', agents: ['claude-code'], scope: 'global' })).toEqual([
+      'add', 'a/b', '-a', 'claude-code', '-g', '-y',
     ]);
   });
 });
@@ -47,6 +53,6 @@ describe('installSkill', () => {
     runMock.mockResolvedValue({ exitCode: 1, stdout: '', stderr: '' });
     await expect(
       installSkill({ id: 'x/y/z', agents: ['claude-code'], scope: 'global' }),
-    ).rejects.toThrow(/skills add x\/y\/z -a claude-code -g -y/);
+    ).rejects.toThrow(/skills add x\/y --skill z -a claude-code -g -y/);
   });
 });

@@ -8,7 +8,13 @@ export interface InstallOpts {
 }
 
 export function buildAddArgs(opts: InstallOpts): string[] {
-  const args = ['add', opts.id];
+  const parts = opts.id.split('/');
+  const args = ['add'];
+  if (parts.length >= 3) {
+    args.push(parts.slice(0, 2).join('/'), '--skill', parts.slice(2).join('/'));
+  } else {
+    args.push(opts.id);
+  }
   for (const a of opts.agents) args.push('-a', a);
   if (opts.scope === 'global') args.push('-g');
   args.push('-y');
