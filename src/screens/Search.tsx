@@ -114,7 +114,6 @@ export function Search(): React.ReactElement {
               showPluginSkills: state.config?.showPluginSkills ?? true,
             });
             dispatch({ type: 'installed/loaded', payload: fresh });
-            dispatch({ type: 'screen/show', payload: 'installed' });
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             dispatch({ type: 'op/error', payload: { id: opId, message: msg } });
