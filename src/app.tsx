@@ -49,7 +49,7 @@ function Router(): React.ReactElement {
       dispatch({ type: 'screen/show', payload: 'settings' });
     }
     dispatch({ type: 'installed/loading' });
-    refreshInstalled()
+    refreshInstalled({ showPluginSkills: cfg?.showPluginSkills ?? true })
       .then((skills) => {
         if (!cancelled) dispatch({ type: 'installed/loaded', payload: skills });
       })

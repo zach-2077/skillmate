@@ -107,7 +107,9 @@ export function Search(): React.ReactElement {
               type: 'toast/push',
               payload: { id: `t-${Date.now()}`, kind: 'success', text: `installed ${opts.id}` },
             });
-            const fresh = await refreshInstalled();
+            const fresh = await refreshInstalled({
+              showPluginSkills: state.config?.showPluginSkills ?? true,
+            });
             dispatch({ type: 'installed/loaded', payload: fresh });
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
