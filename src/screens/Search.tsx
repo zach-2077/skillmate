@@ -8,12 +8,13 @@ import { ToastList } from '../components/Toast.js';
 import { SearchBar } from '../components/SearchBar.js';
 import { installSkill, type InstallOpts } from '../core/install.js';
 import { refreshInstalled } from '../core/installed.js';
-import type { AgentId } from '../core/agents.js';
+import { agents, knownAgentIds, type AgentId } from '../core/agents.js';
 
 const FOOTER_KEYS: ReadonlyArray<[string, string]> = [
   ['←→', 'tab'],
   ['↑↓', 'move'],
   ['/', 'search'],
+  ['tab', 'agent'],
   ['enter', 'detail'],
   ['i', 'install'],
   ['q', 'quit'],
@@ -166,6 +167,16 @@ export function Search(): React.ReactElement {
       }
       return;
     }
+    if (key.tab) {
+      const cycle =
+        state.config?.defaultAgents && state.config.defaultAgents.length > 0
+          ? state.config.defaultAgents
+          : knownAgentIds;
+      const idx = cycle.indexOf(state.currentAgent);
+      const next = cycle[(idx + 1) % cycle.length] ?? cycle[0]!;
+      dispatch({ type: 'agent/select', payload: next });
+      return;
+    }
     if (key.upArrow) return setCursor((c) => Math.max(0, c - 1));
     if (key.downArrow) return setCursor((c) => Math.min(list.length - 1, c + 1));
     if (key.return) {
@@ -197,7 +208,7 @@ export function Search(): React.ReactElement {
 
   return (
     <Box flexDirection="column">
-      <TabBar active="search" />
+      <TabBar active="search" agent={agents[state.currentAgent]?.displayName ?? state.currentAgent} />
       <Box paddingX={1} marginTop={1}>
         <SearchBar query={state.searchQuery} active={inputActive} placeholder="Search skills.sh…" />
       </Box>
