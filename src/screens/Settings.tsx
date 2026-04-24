@@ -23,7 +23,8 @@ type Row =
   | { kind: 'agent'; label: string; agentId: AgentId; detected: boolean }
   | { kind: 'scope'; label: string; value: 'global' | 'project' }
   | { kind: 'confirm-remove'; label: string }
-  | { kind: 'auto-update'; label: string };
+  | { kind: 'auto-update'; label: string }
+  | { kind: 'show-plugin-skills'; label: string };
 
 function buildRows(detected: AgentId[]): Row[] {
   const detectedSet = new Set(detected);
@@ -42,6 +43,7 @@ function buildRows(detected: AgentId[]): Row[] {
     { kind: 'header', label: 'Behavior' },
     { kind: 'confirm-remove', label: 'Confirm before remove' },
     { kind: 'auto-update', label: 'Auto-update on launch' },
+    { kind: 'show-plugin-skills', label: 'Show plugin skills' },
   ];
 }
 
@@ -107,6 +109,8 @@ export function Settings(): React.ReactElement {
             return { ...d, confirmRemove: !d.confirmRemove };
           case 'auto-update':
             return { ...d, autoUpdate: !d.autoUpdate };
+          case 'show-plugin-skills':
+            return { ...d, showPluginSkills: !d.showPluginSkills };
           case 'header':
             return d;
         }
@@ -124,6 +128,8 @@ export function Settings(): React.ReactElement {
         return draft.confirmRemove ? '[x]' : '[ ]';
       case 'auto-update':
         return draft.autoUpdate ? '[x]' : '[ ]';
+      case 'show-plugin-skills':
+        return draft.showPluginSkills ? '[x]' : '[ ]';
       case 'header':
         return '';
     }
